@@ -1,0 +1,24 @@
+# OS / Editor
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/
+
+# Language artifacts
+__pycache__/
+*.pyc
+*.pyo
+node_modules/
+
+# Secrets (never commit)
+*.token
+*token*.json
+.env
+.env.*
+!.env.example
+.secrets/
+
+# Skill local credentials (per-skill .gitignore also covers this)
+appkey.json
