@@ -97,6 +97,10 @@ Evan Song · [github.com/Songhonglei](https://github.com/Songhonglei)
 
 ## Changelog
 
+### v2.0.3 (2026-07-14)
+
+- Runtime-neutral README — equal treatment for OpenClaw / Claude Code / Cursor / standalone (previously the Install section was OpenClaw-centric)
+
 ### v2.0.2 (2026-07-14)
 
 - Multi-agent skill-dir detection (Claude Code / Cursor / XDG / local `./skills`) — works out of the box on any runtime
