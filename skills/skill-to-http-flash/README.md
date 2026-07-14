@@ -11,6 +11,8 @@ POST /run  →  subprocess.run(["python3", "scripts/main.py", "--foo", "x", ...]
 
 No Gateway, no LLM, no `sessions_spawn` at runtime. Sub-second cold start, deterministic output.
 
+**Runtime-neutral by design.** It does not import any agent SDK — it just compiles an `argparse` Python script into a REST API. It runs on OpenClaw, Claude Code, Cursor, any other agent runtime, **or no agent at all** (plain machine / CI / container). The only runtime-specific bit is *where it looks for skill directories by default*, and that is fully overridable via `--skill-dir` / `FLASH_SKILL_DIR`.
+
 ## Features
 
 - **Subprocess direct execution** — no LLM drift, 100% reproducible, `<2s` cold start
@@ -22,6 +24,11 @@ No Gateway, no LLM, no `sessions_spawn` at runtime. Sub-second cold start, deter
 - **Self-contained output** — generated `server.py` has cert / job store / argv builder / envelope inlined; `scp` it to any machine and run
 
 ## Quick Start
+
+`skill-to-http-flash` auto-detects skill directories for common runtimes
+(`~/.openclaw/workspace/skills`, `~/.claude/skills`, `~/.cursor/skills`,
+`~/.config/skills`, `./skills`, `/app/skills`). Point it anywhere else with
+`--skill-dir` / `FLASH_SKILL_DIR`.
 
 ```bash
 # 1. Create a flash project for a skill
@@ -38,13 +45,18 @@ curl -X POST http://127.0.0.1:7780/run \
   -d '{"foo": "bar"}'
 ```
 
-### Standalone (non-OpenClaw)
+### Custom / standalone paths
+
+For any runtime with a non-standard layout, or a plain machine with no agent:
 
 ```bash
 export FLASH_SKILL_DIR=/your/path/to/skills
 export FLASH_DATA_DIR=/your/path/to/flash-data
 python3 scripts/flash.py create --skill my-skill
 ```
+
+The generated `server.py` is fully self-contained — `scp` it to any machine
+and run it with just `pip install -r requirements.txt`.
 
 ## Requirements
 
@@ -57,13 +69,23 @@ python3 scripts/flash.py create --skill my-skill
 
 Full documentation, endpoint reference, param-mapping rules, TLS/auth/CORS config and the CLI command list are in [SKILL.md](./SKILL.md).
 
-## Install in your AI agent
+## Install
 
-| Agent | Install |
+Clone or copy the skill folder into your runtime's skills directory — the
+tool auto-detects it. No runtime is privileged; pick whichever applies:
+
+| Runtime | Install |
 |---|---|
-| OpenClaw | `clawhub install skill-to-http-flash` |
-| Claude Code | Manual: copy to `~/.claude/skills/` |
-| Cursor | Manual: copy to `~/.cursor/skills/` |
+| OpenClaw | `clawhub install skill-to-http-flash`, or copy to `~/.openclaw/workspace/skills/` |
+| Claude Code | Copy to `~/.claude/skills/` |
+| Cursor | Copy to `~/.cursor/skills/` |
+| Any other runtime | Copy anywhere, then set `FLASH_SKILL_DIR` / `--skill-dir` |
+| Standalone (no agent) | `git clone` this folder and run `python3 scripts/flash.py ...` directly |
+
+```bash
+git clone https://github.com/Songhonglei/html-tool-suite.git
+cp -r html-tool-suite/skills/skill-to-http-flash <your-skills-dir>/
+```
 
 ## License
 
