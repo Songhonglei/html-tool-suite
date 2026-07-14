@@ -15,6 +15,7 @@ A suite of skills for **HTML generation, publishing, and sharing** — built for
 | Stage | Skill | Description |
 |---|---|---|
 | Sharing | [`pinme-share`](./skills/pinme-share) | Upload any file/dir to PinMe (public IPFS) → short shareable URL |
+| Serving | [`agent-easy-http`](./skills/agent-easy-http) | Expose your OpenClaw agent as an HTTP(S) REST API over your network IP |
 
 *More skills coming as the suite grows.*
 
