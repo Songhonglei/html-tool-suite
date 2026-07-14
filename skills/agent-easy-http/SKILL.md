@@ -13,7 +13,7 @@ description: >
 
 # agent-easy-http
 
-- **Version**: 1.0.0
+- **Version**: 1.0.1
 - **License**: MIT
 - **Author**: Evan Song · [github.com/Songhonglei](https://github.com/Songhonglei)
 - **Repository**: https://github.com/Songhonglei/html-tool-suite (skill dir: `skills/agent-easy-http`)

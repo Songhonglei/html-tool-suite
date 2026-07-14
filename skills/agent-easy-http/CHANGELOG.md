@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## v1.0.1 (open-source, suite integration)
+
+- 📦 并入 [`html-tool-suite`](https://github.com/Songhonglei/html-tool-suite) 套件（`skills/agent-easy-http/`）
+- 📝 Repository URL 指向 suite repo；README 增加 "Part of" 说明
+- （代码无变化，仅文档/归属对齐）
+
 ## v1.0.0 (open-source first release)
 
 首个开源发布版本。基于 OpenClaw 原生 `/hooks/agent` 的轻代理架构（内部架构代号 v3.0）。
