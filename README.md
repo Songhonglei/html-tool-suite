@@ -22,6 +22,14 @@ A suite of skills for **HTML generation, publishing, and sharing** — built for
 
 ---
 
+## Guides
+
+| Guide | Description |
+|---|---|
+| [HTTP trio](./docs/http-trio.md) | How the three HTTP-serving skills compare (`agent-easy-http` / `skill-to-http-flash` / `skill-to-http`) and when to pick which |
+
+---
+
 ## Install a skill
 
 | Agent | Install |
