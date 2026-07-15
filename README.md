@@ -27,6 +27,8 @@ A suite of skills for **HTML generation, publishing, and sharing** — built for
 | Guide | Description |
 |---|---|
 | [HTTP trio](./docs/http-trio.md) | How the three HTTP-serving skills compare (`agent-easy-http` / `skill-to-http-flash` / `skill-to-http`) and when to pick which |
+| [agent-easy-http design](./docs/design-agent-easy-http.md) | Design of `agent-easy-http` — thin proxy over OpenClaw native `/hooks/agent` (zh) |
+| [skill-to-http-flash design](./docs/design-skill-to-http-flash.md) | Design of `skill-to-http-flash` — subprocess direct-exec, zero-LLM runtime (zh) |
 
 ---
 
