@@ -4,9 +4,6 @@
 > 核心理念：**最薄代理层** —— 自己只做 HTTP 转发 + 鉴权 + 安全加固，
 > 把真正的执行与隔离完全交给 OpenClaw 原生 `/hooks/agent`。
 
-> 📐 说明："v3.0" 是本 skill 的**内部架构代号**（基于 OpenClaw 原生 hooks 的
-> 轻代理实现），与发布版本号是两个维度。本文以 v3.0 架构为准。
-
 ---
 
 ## 1. 一句话定位
@@ -22,22 +19,22 @@ agent-easy-http（下称 aeh）解决的是这样一个问题：
 
 ---
 
-## 2. v3.0 的核心决策：从"CLI 冷启动"到"原生 hooks"
+## 2. 核心设计：最薄代理层
 
-aeh v2.0 曾用 `openclaw agent` CLI 方式执行——每个请求 embedded 冷启动约 90s，
-而且多请求容易串进同一个 session。v3.0 彻底重构，改用 OpenClaw 原生
-`/hooks/agent` 端点：
+aeh **自己不启动、不执行任何 Agent 逻辑**，而是把请求转成一个 OpenClaw hook
+事件，由 Gateway 毫秒派发到一个独立隔离的 sub-agent session 去执行。aeh 只负责
+四件事：**HTTP 转发、API Key 鉴权、安全加固、结果追踪**。
 
-| 维度 | v2.0（CLI 冷启动）| **v3.0（原生 hooks）**|
-|---|---|---|
-| 执行引擎 | `openclaw agent` CLI（~90s 冷启动）| **`/hooks/agent`（毫秒触发）**|
-| Session 隔离 | 🐛 多请求可能串入同一 session | ✅ **每请求自动 `hook:<uuid>`**|
-| Job 管理 | 本地 JSON 持久化 + asyncio.Event | ❌ 删除（OpenClaw 自己管）|
-| Callback HMAC | 自定义回调链路 | ❌ 删除（hooks fire-and-forget）|
-| sub-agent 开销 | 每次冷启动 | ✅ 零开销 |
+这样设计带来几个直接好处：
 
-一句话：**aeh 不再自己启动 Agent，而是把请求转成 OpenClaw hook 事件，
-由 Gateway 毫秒派发到一个独立隔离的 sub-agent session。**
+| 特性 | 说明 |
+|---|---|
+| **毫秒触发** | 走 OpenClaw 原生 `/hooks/agent`，无需为每个请求冷启动 Agent |
+| **自动 session 隔离** | 每个请求自动落到独立的 `hook:<uuid>` session，互不串扰 |
+| **零 Job 管理负担** | 任务生命周期交给 OpenClaw，代理层不用自己维护 Job 存储 |
+| **fire-and-forget** | 转发即返回，不阻塞 HTTP 连接；结果靠 `run_id` 异步查询 |
+
+一句话：**aeh 是一层极薄的"翻译 + 加固 + 追踪"代理，真正的重活全交给 OpenClaw。**
 
 ---
 
@@ -138,7 +135,7 @@ aeh 是"把 Agent 暴露到网络"，安全是重中之重，分七层防御：
 
 ## 7. OpenClaw hooks 自动启用
 
-aeh v3.0 依赖 OpenClaw 的 `/hooks/agent`，需要 4 项 Gateway 配置：
+aeh 依赖 OpenClaw 的 `/hooks/agent`，需要 4 项 Gateway 配置：
 
 | 配置项 | 值 | 用途 |
 |---|---|---|
@@ -190,7 +187,7 @@ aeh 自带 watchdog 脚本，每 30s 检查一次：
 
 | 决策 | 选择 | 理由 |
 |---|---|---|
-| 执行方式 | 转发到原生 `/hooks/agent` | 毫秒派发 + 零冷启动 + 自动 session 隔离 |
+| 执行方式 | 转发到原生 `/hooks/agent` | 毫秒派发 + 无需冷启动 + 自动 session 隔离 |
 | 自己不管 Job | 是 | 交给 OpenClaw，代理层保持极薄 |
 | 回调方式 | fire-and-forget + run_id 轮询 | 不阻塞 HTTP 连接，超时语义清晰 |
 | 默认全开放 + 黑名单 | 是 | 易用优先，靠多层安全兜底 |
