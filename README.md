@@ -17,6 +17,7 @@ A suite of skills for **HTML generation, publishing, and sharing** — built for
 | Sharing | [`pinme-share`](./skills/pinme-share) | Upload any file/dir to PinMe (public IPFS) → short shareable URL |
 | Serving | [`agent-easy-http`](./skills/agent-easy-http) | Expose your OpenClaw agent as an HTTP(S) REST API over your network IP |
 | Serving | [`skill-to-http-flash`](./skills/skill-to-http-flash) | Compile a single skill into a standalone HTTP REST API (subprocess, zero-LLM runtime) |
+| Serving | [`skill-to-http`](./skills/skill-to-http) | Serve all installed skills as REST APIs with a bilingual web console |
 
 *More skills coming as the suite grows.*
 
