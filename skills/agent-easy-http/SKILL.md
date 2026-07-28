@@ -13,12 +13,23 @@ description: >
 
 # agent-easy-http
 
-- **Version**: 1.0.1
+- **Version**: 1.0.2
 - **License**: MIT
 - **Author**: Evan Song · [github.com/Songhonglei](https://github.com/Songhonglei)
 - **Repository**: https://github.com/Songhonglei/html-tool-suite (skill dir: `skills/agent-easy-http`)
 
 把 OpenClaw 的 agent 能力通过 **HTTP(S) + 网络 IP** 暴露给其它系统调用。
+
+> ## ⚠️ 安全须知（部署前必读）
+>
+> 本 skill 会启动一个常驻代理，把你的 **OpenClaw agent 暴露成可远程调用的 HTTP 接口**。agent 具备文件、shell、消息发送等本机能力，因此这是一个**对外开放的远程控制面**，请理解以下风险边界：
+>
+> - **`/agent/run` 是通用入口**：任何通过鉴权的调用方都能向 agent 发送**任意 prompt**，由 agent 自行决定调用哪些 Skill——包括发消息、改数据等有副作用的操作。请确保端口只对可信调用方开放。
+> - **默认 HTTP 不加密**：默认模式下 `X-API-Key`、prompt、执行结果均**明文传输**。仅 `localhost` / 可信内网可接受；监听 `0.0.0.0` 或跨主机调用务必启用 HTTPS，切勿在生产用 `curl -k` 跳过证书校验。
+> - **会修改全局配置**：init / watchdog 会写入并自愈 `~/.openclaw/openclaw.json` 的 hooks 配置（可选还会同步到 `OPENCLAW_CONFIG_SYNC_PATHS` 外部配置源）。这是平台级改动，管理员手动回退后 watchdog 可能重新应用，请知悉其持久化行为。
+> - **保护好 API Key**：Key 是 bearer 凭证，泄露即等同交出 agent 调用权。注意别进入 shell history、日志、截图或权限过宽的文件。
+>
+> 一句话：**把它当作暴露内部 agent 服务来对待，务必配好鉴权、绑定与 TLS，而非零风险的便捷封装。**
 
 > 📐 下文的 "v3.0 架构" 指本 skill 内部的**架构代号**（v3.0 = 基于 OpenClaw 原生 `/hooks/agent`
 > 的轻代理实现，取代早期 v2.0 的 `openclaw agent` CLI 冷启动方案），与开源发布版本号 1.0.0 是两个维度。
