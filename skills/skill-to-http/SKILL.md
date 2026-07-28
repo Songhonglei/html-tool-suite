@@ -12,7 +12,7 @@ description: >
 
 # skill-to-http
 
-- **Version**: 1.0.0
+- **Version**: 1.0.1
 - **License**: MIT
 - **Author**: Evan Song · [github.com/Songhonglei](https://github.com/Songhonglei)
 - **Repository**: https://github.com/Songhonglei/html-tool-suite (skill dir: `skills/skill-to-http`)
@@ -22,6 +22,17 @@ description: >
 > 所有 `SKILL_HTTP_*` / `OPENCLAW_*` 环境变量均为可选覆盖项，无一强制。
 
 将已安装的 agent Skill 暴露为 HTTP/HTTPS REST API 服务。
+
+> ## ⚠️ 安全须知（部署前必读）
+>
+> 本 skill 会启动一个常驻服务，把你**本机已安装的 agent Skill 暴露成可远程调用的 HTTP 接口**——被暴露的 Skill 可能拥有文件、shell、网络、凭证等本机能力。请务必理解以下风险边界：
+>
+> - **暴露即扩大攻击面**：任何能访问该端口的调用方，都能触发被暴露 Skill 的执行。`expose_skills: ["*"]` / `--expose-skill "*"` 会一次性开放**全部**已安装 Skill，仅建议在你完全掌控的隔离环境使用；生产/共享环境请改用白名单并对有副作用的 Skill 配置 `deny_skills`。
+> - **默认 HTTP 不加密**：默认模式下 `X-API-Key`、请求 prompt、Skill 输出均**明文传输**。仅在 `localhost` 或可信内网可接受；跨主机 / 生产环境务必启用 HTTPS。
+> - **务必设置鉴权与绑定**：非本机访问时必须配置 API Key，并谨慎对待 `0.0.0.0` 监听。管理控制台可启停服务、改配置、续证书，API Key 泄露等同交出服务控制权。
+> - **执行即时且不二次确认**：执行器默认「立即执行、不询问」。对发邮件 / 删数据等高风险 Skill，请在其 frontmatter 设 `requires_confirmation: true`。
+>
+> 一句话：**这是一个把本机能力对外开放的工具，请当作暴露内部服务来对待，而非零风险的便捷封装。**
 
 ## 快速开始
 
