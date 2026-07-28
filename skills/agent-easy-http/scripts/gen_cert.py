@@ -218,7 +218,7 @@ def main():
         sys.exit(1)
 
     CERT_DIR.mkdir(parents=True, exist_ok=True)
-    os.chmod(CERT_DIR.parent, 0o755)
+    os.chmod(CERT_DIR.parent, 0o700)
 
     # 检查是否已有证书
     if CERT_PATH.exists() and not args.force:
