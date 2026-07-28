@@ -138,7 +138,7 @@ def ensure_dirs() -> None:
     SECRETS_DIR.mkdir(parents=True, exist_ok=True)
     API_KEYS_DIR.mkdir(parents=True, exist_ok=True)
     try:
-        os.chmod(HTTP_ROOT, 0o755)
+        os.chmod(HTTP_ROOT, 0o700)
         os.chmod(SECRETS_DIR, 0o700)
         os.chmod(API_KEYS_DIR, 0o700)
     except OSError:
