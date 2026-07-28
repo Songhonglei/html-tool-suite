@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## v1.0.2 (2026-07-28)
+
+Security hardening in response to clawhub SkillSpector review (no functional change):
+
+- **Directory permissions**: `ensure_dirs()` created the HTTP root at `0o755` despite the docstring stating `0o700`. Tightened to `0o700` in both `tls_auth.py` and `gen_cert.py`, preventing directory traversal/metadata exposure on multi-user hosts. Service runs as a single user, so no functional impact.
+- **Prominent Security Notice** added to the top of `SKILL.md` and `README.md`: explains that exposing the agent over HTTP is a remote control surface, that `/agent/run` accepts open-ended prompts, that default HTTP is cleartext, that init/watchdog modify global `openclaw.json` hooks config, and that the API Key is a bearer credential — so operators deploy with informed consent.
+
 ## v1.0.1 (open-source, suite integration)
 
 - 📦 并入 [`html-tool-suite`](https://github.com/Songhonglei/html-tool-suite) 套件（`skills/agent-easy-http/`）
