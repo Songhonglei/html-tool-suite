@@ -6,6 +6,15 @@ Let other systems on your network call your OpenClaw agent to run tasks, e.g.
 `POST http://<your-server-ip>:7720/agent/run`. HTTP by default (zero-friction);
 optional HTTPS with self-signed SAN certificates for cross-host / production.
 
+## ⚠️ Security Notice — read before deploying
+
+This skill starts a persistent proxy that **exposes your OpenClaw agent as a remotely callable HTTP endpoint**. The agent has file, shell, and messaging capabilities on the host, so this is a **remote control surface** — treat it as exposing an internal service, not a zero-risk wrapper:
+
+- **`/agent/run` is an open-ended entry point.** Any authenticated caller can send **arbitrary prompts** to the agent, which then decides which Skills to run — including side-effecting ones (send messages, modify data). Keep the port reachable only by trusted callers.
+- **HTTP is the default and is unencrypted.** By default the `X-API-Key`, prompts, and results travel in **cleartext**. Acceptable only on `localhost` / a trusted network; enable HTTPS when binding `0.0.0.0` or calling cross-host, and never use `curl -k` (skip cert verification) in production.
+- **It modifies global config.** init / watchdog write and self-heal the hooks config in `~/.openclaw/openclaw.json` (and optionally sync to external sources via `OPENCLAW_CONFIG_SYNC_PATHS`). This is a platform-level change; the watchdog may re-apply it after a manual revert — be aware of this persistence behavior.
+- **Protect the API Key.** It is a bearer credential — leaking it grants agent-invocation rights. Keep it out of shell history, logs, screenshots, and world-readable files.
+
 ## Features
 
 - **Thin proxy over `/hooks/agent`** — no embedded agent cold-start; millisecond trigger
