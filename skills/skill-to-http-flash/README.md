@@ -13,6 +13,14 @@ No Gateway, no LLM, no `sessions_spawn` at runtime. Sub-second cold start, deter
 
 **Runtime-neutral by design.** It does not import any agent SDK — it just compiles an `argparse` Python script into a REST API. It runs on OpenClaw, Claude Code, Cursor, any other agent runtime, **or no agent at all** (plain machine / CI / container). The only runtime-specific bit is *where it looks for skill directories by default*, and that is fully overridable via `--skill-dir` / `FLASH_SKILL_DIR`.
 
+## ⚠️ Security Notice — read before deploying
+
+Compiling a skill into an HTTP service exposes whatever that skill can do (file, network, system actions) to any caller who can reach the endpoint. Treat it as publishing a code-execution surface, not a zero-risk wrapper:
+
+- **Network exposure of the wrapped skill.** `/run` executes the skill via subprocess for any reachable caller. Auth (API Key) is optional and CORS is permissive by default — set an API Key and restrict binding/CORS before exposing beyond `localhost` or a trusted network. Default HTTP is unencrypted; enable HTTPS for cross-host use.
+- **Optional generation-time LLM sends SKILL.md off-host.** During `create` / `recreate` only, param-schema extraction can call an external chat-completions endpoint with the skill's `SKILL.md`. This is **off by default** (unconfigured → heuristic fallback); it activates only when you set `llm.base_url` + `llm.api_key`. Runtime (`/run`) never touches an LLM. If you enable it, ensure SKILL.md holds no secrets/internal details and trust the endpoint. 
+- **`--delete-files` is destructive.** `flash.py remove --skill <name> --delete-files` permanently deletes the generated service files. Double-check the skill name before running — there is no undo.
+
 ## Features
 
 - **Subprocess direct execution** — no LLM drift, 100% reproducible, `<2s` cold start
@@ -96,6 +104,10 @@ MIT (see [LICENSE](./LICENSE))
 Evan Song · [github.com/Songhonglei](https://github.com/Songhonglei)
 
 ## Changelog
+
+### v2.0.4 (2026-07-28)
+
+- Documentation-only: added a **Security Notice** near the top of the README covering (1) network exposure of the wrapped skill (auth/CORS/HTTP defaults), (2) the optional generation-time LLM path that sends `SKILL.md` off-host — off by default, runtime stays LLM-free, and (3) `--delete-files` being a destructive, no-undo operation. Addresses review findings about missing user warnings. No code change.
 
 ### v2.0.3 (2026-07-14)
 
