@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.2 (2026-07-28)
+
+Documentation-only update (no code change):
+
+- **README Security Notice** extended with an explicit note that the optional `llm` executor / param-extraction path sends `SKILL.md` to an external chat-completions endpoint. Clarifies it is **off by default** (only active when `llm.base_url` + `llm.api_key` are configured) and advises trusting the endpoint / keeping SKILL.md free of secrets. This matches the safety note already in SKILL.md and addresses review findings about undocumented data egress.
+
 ## v1.0.1 (2026-07-28)
 
 Security hardening in response to clawhub SkillSpector review (no functional change):
