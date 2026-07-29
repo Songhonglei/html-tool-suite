@@ -12,7 +12,7 @@ description: >
 
 # skill-to-http
 
-- **Version**: 1.0.1
+- **Version**: 1.0.2
 - **License**: MIT
 - **Author**: Evan Song · [github.com/Songhonglei](https://github.com/Songhonglei)
 - **Repository**: https://github.com/Songhonglei/html-tool-suite (skill dir: `skills/skill-to-http`)
