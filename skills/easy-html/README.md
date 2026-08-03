@@ -8,6 +8,9 @@ HTML page**: semantic skeleton → data visualisation → one of 19 themes → t
 
 Part of the [html-tool-suite](https://github.com/Songhonglei/html-tool-suite).
 
+🌐 **[Live landing page →](https://songhonglei.github.io/html-tool-suite/easy-html/)** — browse all
+19 themes and click any card to recolour the whole site (the page is its own demo).
+
 ---
 
 ## Why
