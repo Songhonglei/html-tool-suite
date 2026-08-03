@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>easy-html · Turn any content into a polished web page</title>
+<meta name="description" content="An open-source agent skill that turns Markdown, Excel, Word, tables and images into a well-designed single-page HTML — with 19 built-in themes and a layout-inheritance mode.">
+<meta property="og:title" content="easy-html · Turn any content into a polished web page">
+<meta property="og:description" content="Open-source agent skill: content in, designed web page out. 19 themes, visualisation-first, layout inheritance.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%230A7CFF'/%3E%3Cstop offset='1' stop-color='%235AC8FA'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='4' y='4' width='56' height='56' rx='14' fill='url(%23g)'/%3E%3Cpath d='M20 24h24M20 32h16M20 40h20' stroke='white' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&family=Noto+Serif+SC:wght@400;700;900&family=Playfair+Display:wght@700;900&family=Rajdhani:wght@600;700&family=Cinzel:wght@600;800&family=IBM+Plex+Mono:wght@500&family=Inter:wght@300;400;500;600;700;800&display=swap">
+<style>
+
+/* ============ Theme variables (default: Liquid Glass) ============ */
+:root{
+  --eh-primary:#0A7CFF;
+  --eh-primary-light:rgba(10,124,255,0.10);
+  --eh-bg:#EFF4FA;
+  --eh-surface:rgba(255,255,255,0.58);
+  --eh-text:#16233A;
+  --eh-text-muted:#5D6B80;
+  --eh-border:rgba(255,255,255,0.65);
+  --eh-font:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Helvetica Neue","Noto Sans SC",sans-serif;
+  --eh-font-head:var(--eh-font);
+  /* Glass material layer */
+  --lg-blur:26px;
+  --lg-shadow:0 10px 40px rgba(31,59,101,0.13);
+  --lg-inner:inset 0 1px 0 rgba(255,255,255,0.85);
+  --lg-glow1:rgba(88,170,255,0.38);
+  --lg-glow2:rgba(112,216,236,0.32);
+  --lg-glow3:rgba(255,255,255,0.55);
+}
+:root[data-dark="1"]{
+  --lg-shadow:0 10px 40px rgba(0,0,0,0.45);
+  --lg-inner:inset 0 1px 0 rgba(255,255,255,0.07);
+  --lg-glow3:transparent;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--eh-font);color:var(--eh-text);background:var(--eh-bg);
+  line-height:1.65;overflow-x:hidden;
+  transition:background .5s ease,color .5s ease;
+}
+/* Background orbs (liquid-glass ambience) */
+.bg-orbs{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);opacity:.9;transition:background 0.6s ease}
+.orb1{width:640px;height:640px;top:-180px;left:-120px;background:var(--lg-glow1);animation:drift1 22s ease-in-out infinite alternate}
+.orb2{width:520px;height:520px;top:30%;right:-160px;background:var(--lg-glow2);animation:drift2 26s ease-in-out infinite alternate}
+.orb3{width:560px;height:560px;bottom:-200px;left:28%;background:var(--lg-glow3);animation:drift1 30s ease-in-out infinite alternate-reverse}
+@keyframes drift1{from{transform:translate(0,0) scale(1)}to{transform:translate(60px,40px) scale(1.08)}}
+@keyframes drift2{from{transform:translate(0,0) scale(1)}to{transform:translate(-50px,60px) scale(1.05)}}
+
+.wrap{max-width:1120px;margin:0 auto;padding:0 28px}
+/* ============ Glass card primitive ============ */
+.glass{
+  background:var(--eh-surface);
+  backdrop-filter:blur(var(--lg-blur)) saturate(1.7);
+  -webkit-backdrop-filter:blur(var(--lg-blur)) saturate(1.7);
+  border:1px solid var(--eh-border);
+  border-radius:24px;
+  box-shadow:var(--lg-shadow),var(--lg-inner);
+  transition:background .5s ease,border-color .5s ease,transform .3s ease,box-shadow .3s ease;
+}
+/* ============ Top navigation ============ */
+nav{
+  position:sticky;top:14px;z-index:100;margin:14px auto 0;max-width:1120px;
+  display:flex;align-items:center;gap:8px;padding:10px 22px;
+  border-radius:999px;
+}
+nav .logo{font-weight:800;font-size:19px;letter-spacing:.5px;display:flex;align-items:center;gap:9px;color:var(--eh-text);text-decoration:none}
+nav .logo svg{flex:none}
+nav .links{margin-left:auto;display:flex;gap:4px;align-items:center}
+nav .links a{color:var(--eh-text-muted);text-decoration:none;font-size:14.5px;font-weight:500;padding:7px 14px;border-radius:999px;transition:.25s}
+nav .links a:hover{color:var(--eh-primary);background:var(--eh-primary-light)}
+#resetTheme{
+  display:none;border:1px solid var(--eh-border);background:var(--eh-primary-light);
+  color:var(--eh-primary);font-size:13px;font-weight:600;padding:7px 14px;border-radius:999px;cursor:pointer;
+  font-family:var(--eh-font);
+}
+#resetTheme.show{display:inline-block}
+/* ============ Hero ============ */
+.hero{padding:92px 0 60px;text-align:center}
+.hero .badge{
+  display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600;color:var(--eh-primary);
+  background:var(--eh-primary-light);border:1px solid var(--eh-border);
+  padding:7px 16px;border-radius:999px;margin-bottom:26px;
+}
+.hero h1{
+  font-family:var(--eh-font-head);
+  font-size:clamp(34px,5.6vw,60px);font-weight:800;line-height:1.18;letter-spacing:-.5px;
+  margin-bottom:20px;
+}
+.hero h1 .grad{
+  background:linear-gradient(100deg,var(--eh-primary) 10%,var(--eh-text) 130%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+.hero .sub{font-size:clamp(15.5px,2vw,19px);color:var(--eh-text-muted);max-width:640px;margin:0 auto 38px}
+.hero .cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;padding:13px 30px;border-radius:999px;
+  font-size:15.5px;font-weight:650;text-decoration:none;cursor:pointer;transition:.25s;border:none;font-family:var(--eh-font);
+}
+.btn-primary{background:var(--eh-primary);color:#fff;box-shadow:0 6px 22px var(--eh-primary-light)}
+.btn-primary:hover{transform:translateY(-2px);filter:brightness(1.08)}
+.btn-ghost{background:var(--eh-surface);color:var(--eh-text);border:1px solid var(--eh-border);backdrop-filter:blur(16px)}
+.btn-ghost:hover{color:var(--eh-primary);transform:translateY(-2px)}
+/* Hero pipeline diagram */
+.pipeline{
+  margin:64px auto 0;padding:34px 30px;display:flex;align-items:center;justify-content:space-between;gap:16px;
+  max-width:960px;flex-wrap:wrap;
+}
+.pipe-inputs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;flex:1;min-width:250px}
+.pipe-chip{
+  display:flex;align-items:center;gap:8px;padding:9px 13px;border-radius:14px;
+  background:var(--eh-primary-light);border:1px solid var(--eh-border);
+  font-size:13px;font-weight:600;color:var(--eh-text);white-space:nowrap;
+  animation:chipPulse 3.6s ease-in-out infinite;
+}
+.pipe-chip svg{flex:none;color:var(--eh-primary)}
+.pipe-chip:nth-child(1){animation-delay:0s}.pipe-chip:nth-child(2){animation-delay:.6s}
+.pipe-chip:nth-child(3){animation-delay:1.2s}.pipe-chip:nth-child(4){animation-delay:1.8s}
+.pipe-chip:nth-child(5){animation-delay:2.4s}.pipe-chip:nth-child(6){animation-delay:3s}
+@keyframes chipPulse{0%,100%{transform:translateY(0);box-shadow:none}12%{transform:translateY(-4px);box-shadow:0 8px 18px var(--eh-primary-light)}24%{transform:translateY(0)}}
+.pipe-arrow{display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--eh-primary);flex:none}
+.pipe-arrow .core{
+  font-weight:800;font-size:14px;letter-spacing:1px;padding:12px 18px;border-radius:16px;
+  background:var(--eh-primary);color:#fff;box-shadow:0 8px 26px var(--eh-primary-light);
+}
+.pipe-arrow .flow{display:flex;gap:4px}
+.pipe-arrow .dot{width:6px;height:6px;border-radius:50%;background:var(--eh-primary);opacity:.25;animation:flowDot 1.5s linear infinite}
+.pipe-arrow .dot:nth-child(2){animation-delay:.25s}.pipe-arrow .dot:nth-child(3){animation-delay:.5s}
+@keyframes flowDot{0%,100%{opacity:.25}50%{opacity:1}}
+.pipe-out{flex:1;min-width:230px;display:flex;justify-content:center}
+.mini-page{
+  width:230px;border-radius:16px;overflow:hidden;border:1px solid var(--eh-border);
+  background:var(--eh-surface);box-shadow:var(--lg-shadow);backdrop-filter:blur(14px);
+}
+.mini-page .mp-bar{height:22px;background:var(--eh-primary-light);display:flex;align-items:center;gap:4px;padding:0 9px}
+.mini-page .mp-bar i{width:7px;height:7px;border-radius:50%;background:var(--eh-primary);opacity:.5;font-style:normal}
+.mini-page .mp-body{padding:13px 14px;display:flex;flex-direction:column;gap:8px}
+.mini-page .mp-title{height:11px;width:62%;border-radius:6px;background:var(--eh-primary)}
+.mini-page .mp-line{height:7px;border-radius:4px;background:var(--eh-text-muted);opacity:.3}
+.mini-page .mp-line.short{width:74%}
+.mini-page .mp-chart{display:flex;align-items:flex-end;gap:5px;height:44px;padding-top:4px}
+.mini-page .mp-chart i{flex:1;border-radius:4px 4px 0 0;background:var(--eh-primary);opacity:.75;font-style:normal;animation:barGrow 2.6s ease-in-out infinite alternate}
+@keyframes barGrow{from{transform:scaleY(.82)}to{transform:scaleY(1)}}
+.mini-page .mp-chart i:nth-child(1){height:40%}.mini-page .mp-chart i:nth-child(2){height:68%}
+.mini-page .mp-chart i:nth-child(3){height:52%}.mini-page .mp-chart i:nth-child(4){height:88%}
+.mini-page .mp-chart i:nth-child(5){height:72%}
+/* ============ Shared section ============ */
+section{padding:74px 0}
+.sec-head{text-align:center;margin-bottom:48px}
+.sec-head .kicker{font-size:13.5px;font-weight:700;letter-spacing:2.5px;color:var(--eh-primary);text-transform:uppercase;margin-bottom:12px}
+.sec-head h2{font-family:var(--eh-font-head);font-size:clamp(26px,3.6vw,38px);font-weight:800;letter-spacing:-.3px;margin-bottom:14px}
+.sec-head p{color:var(--eh-text-muted);font-size:16px;max-width:620px;margin:0 auto}
+/* ============ Feature cards ============ */
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.feat{padding:32px 28px}
+.feat:hover{transform:translateY(-5px)}
+.feat .ico{
+  width:52px;height:52px;border-radius:16px;display:flex;align-items:center;justify-content:center;
+  background:var(--eh-primary-light);color:var(--eh-primary);margin-bottom:20px;
+}
+.feat h3{font-family:var(--eh-font-head);font-size:19px;font-weight:750;margin-bottom:10px}
+.feat p{font-size:14.5px;color:var(--eh-text-muted)}
+.feat .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px}
+.feat .tags span{font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;background:var(--eh-primary-light);color:var(--eh-primary)}
+/* ============ How it works ============ */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;counter-reset:step}
+.step{padding:26px 22px;position:relative}
+.step .num{
+  width:34px;height:34px;border-radius:50%;background:var(--eh-primary);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;margin-bottom:16px;
+}
+.step h4{font-size:16px;font-weight:700;margin-bottom:8px}
+.step p{font-size:13.5px;color:var(--eh-text-muted)}
+.dual-path{margin-top:26px;padding:20px 26px;display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap}
+.dual-path .pill{font-size:13.5px;font-weight:650;padding:8px 16px;border-radius:999px;background:var(--eh-primary-light);color:var(--eh-primary)}
+.dual-path .txt{font-size:14px;color:var(--eh-text-muted)}
+/* ============ Gallery ============ */
+.hint-bar{
+  margin:0 0 34px;padding:15px 24px;display:flex;align-items:center;gap:12px;justify-content:center;
+  font-size:14.5px;color:var(--eh-text);flex-wrap:wrap;text-align:center;
+}
+.hint-bar b{color:var(--eh-primary)}
+.hint-bar .spark{flex:none;color:var(--eh-primary);animation:sparkle 2.2s ease-in-out infinite}
+@keyframes sparkle{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.25);opacity:.7}}
+.filter-bar{display:flex;gap:8px;justify-content:center;margin-bottom:36px;flex-wrap:wrap}
+.filter-btn{
+  padding:9px 22px;border-radius:999px;border:1px solid var(--eh-border);cursor:pointer;
+  background:var(--eh-surface);color:var(--eh-text-muted);font-size:14px;font-weight:650;font-family:var(--eh-font);
+  backdrop-filter:blur(12px);transition:.25s;
+}
+.filter-btn:hover{color:var(--eh-primary)}
+.filter-btn.active{background:var(--eh-primary);border-color:var(--eh-primary);color:#fff;box-shadow:0 6px 18px var(--eh-primary-light)}
+.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.tcard{padding:0;overflow:hidden;cursor:pointer;position:relative}
+.tcard:hover{transform:translateY(-6px)}
+.tcard.active{outline:2.5px solid var(--eh-primary);outline-offset:2px}
+.tcard.hidden{display:none}
+/* Mini preview: one bespoke demo per theme */
+.tprev{padding:16px;position:relative;min-height:158px;display:flex;flex-direction:column;justify-content:center;overflow:hidden}
+.tprev *{line-height:1.35}
+.mdemo{border-radius:12px;padding:14px 15px;position:relative;overflow:hidden}
+.md-eyebrow{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;opacity:.85}
+.md-title{font-size:16.5px;font-weight:800;margin-bottom:4px}
+.md-sub{font-size:11px;opacity:.75;margin-bottom:9px}
+.md-row{display:flex;gap:7px;align-items:stretch}
+.md-kpi{flex:1;border-radius:9px;padding:7px 9px}
+.md-kpi b{display:block;font-size:15px;font-weight:800}
+.md-kpi span{font-size:9.5px;opacity:.75}
+.md-tagline{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.md-tagline i{font-style:normal;font-size:9.5px;font-weight:650;padding:2.5px 8px;border-radius:999px}
+.md-bar{height:6px;border-radius:4px;margin-top:6px;overflow:hidden}
+.md-bar i{display:block;height:100%;border-radius:4px}
+.md-seal{position:absolute;right:11px;bottom:10px;width:30px;height:30px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;transform:rotate(6deg)}
+.md-ticker{font-family:ui-monospace,Menlo,monospace;font-size:11px;display:flex;justify-content:space-between;padding:3.5px 0;border-bottom:1px dashed rgba(128,128,128,.25)}
+.md-code{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;padding:9px 11px;border-radius:8px;white-space:pre}
+.tcard .tinfo{padding:16px 20px 18px;border-top:1px solid var(--eh-border)}
+.tcard .tname{display:flex;align-items:center;gap:9px;font-weight:750;font-size:16px;margin-bottom:5px}
+.tcard .tname .dotc{width:13px;height:13px;border-radius:50%;flex:none;box-shadow:0 0 0 3px var(--eh-primary-light)}
+.tcard .tname .hex{margin-left:auto;font-size:11.5px;font-weight:600;color:var(--eh-text-muted);font-family:ui-monospace,Menlo,monospace}
+.tcard .tdesc{font-size:12.5px;color:var(--eh-text-muted);margin-bottom:13px}
+.tcard .tdemos{display:flex;gap:7px;flex-wrap:wrap}
+.tcard .tdemos a{
+  font-size:12px;font-weight:650;text-decoration:none;padding:5.5px 11px;border-radius:999px;
+  background:var(--eh-primary-light);color:var(--eh-primary);transition:.2s;display:inline-flex;align-items:center;gap:4px;
+}
+.tcard .tdemos a:hover{background:var(--eh-primary);color:#fff}
+.tcard .try-hint{
+  position:absolute;top:12px;right:12px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;
+  background:var(--eh-primary);color:#fff;opacity:0;transform:translateY(-4px);transition:.25s;pointer-events:none;
+}
+.tcard:hover .try-hint{opacity:1;transform:translateY(0)}
+/* ============ Usage ============ */
+.use-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-bottom:44px}
+.chat-card{padding:24px;display:flex;flex-direction:column;gap:14px}
+.chat-card .who{font-size:12px;font-weight:700;letter-spacing:1px;color:var(--eh-text-muted);text-transform:uppercase}
+.bubble{padding:13px 16px;border-radius:16px;font-size:13.8px;line-height:1.6}
+.bubble.user{background:var(--eh-primary);color:#fff;border-bottom-right-radius:5px;align-self:flex-end;max-width:95%}
+.bubble.bot{background:var(--eh-primary-light);color:var(--eh-text);border-bottom-left-radius:5px;max-width:95%;border:1px solid var(--eh-border)}
+.bubble.bot b{color:var(--eh-primary)}
+.faq{max-width:780px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.faq details{padding:4px 24px;border-radius:18px}
+.faq summary{cursor:pointer;font-weight:650;font-size:15px;padding:16px 0;list-style:none;display:flex;align-items:center;gap:10px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .q{color:var(--eh-primary);font-weight:800;flex:none}
+.faq details p{padding:0 0 18px 26px;font-size:14px;color:var(--eh-text-muted)}
+/* ============ CTA & footer ============ */
+.final-cta{text-align:center;padding:64px 40px}
+.final-cta h2{font-family:var(--eh-font-head);font-size:clamp(24px,3.4vw,34px);font-weight:800;margin-bottom:14px}
+.final-cta p{color:var(--eh-text-muted);margin-bottom:30px;font-size:15.5px}
+footer{padding:44px 0 56px;text-align:center;color:var(--eh-text-muted);font-size:13px}
+footer b{color:var(--eh-text)}
+/* toast */
+#toast{
+  position:fixed;bottom:34px;left:50%;transform:translateX(-50%) translateY(80px);z-index:200;
+  padding:12px 26px;border-radius:999px;font-size:14px;font-weight:650;color:#fff;background:var(--eh-primary);
+  box-shadow:0 10px 30px rgba(0,0,0,.18);transition:.35s;opacity:0;pointer-events:none;white-space:nowrap;
+}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+/* ============ Responsive ============ */
+@media(max-width:900px){
+  .feat-grid,.gallery,.use-grid{grid-template-columns:repeat(2,1fr)}
+  .steps{grid-template-columns:repeat(2,1fr)}
+  .pipeline{flex-direction:column}
+  .pipe-arrow{transform:rotate(90deg);margin:6px 0}
+}
+@media(max-width:600px){
+  .feat-grid,.gallery,.use-grid{grid-template-columns:1fr}
+  .steps{grid-template-columns:1fr}
+  nav .links a:not(.keep){display:none}
+  .hero{padding:60px 0 40px}
+  section{padding:54px 0}
+}
+
+/* ---- open-source page additions ---- */
+.code-block{
+  font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;line-height:1.85;
+  padding:18px 22px;border-radius:14px;white-space:pre;overflow-x:auto;
+  background:rgba(12,20,35,.86);color:#DCE6F5;border:1px solid var(--eh-border);
+}
+:root[data-dark="1"] .code-block{background:rgba(0,0,0,.5)}
+.code-block .c{color:#7C93B0}
+.code-block .k{color:#6FD3FF}
+.install-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:26px}
+.install-grid .glass{padding:26px 28px}
+.install-grid h4{font-size:16px;font-weight:750;margin-bottom:6px}
+.install-grid p{font-size:13px;color:var(--eh-text-muted);margin-bottom:14px}
+.badges{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin-bottom:26px}
+.badges img{height:22px}
+.tcard .tkey{margin-top:2px}
+.tcard .tkey code{
+  font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;font-weight:600;
+  color:var(--eh-primary);background:var(--eh-primary-light);
+  padding:4px 10px;border-radius:7px;display:inline-block;
+}
+.code-block code{font-family:inherit}
+/* Mobile: keep long code lines and the pipeline inside the viewport */
+@media(max-width:560px){
+  .code-block{font-size:11.5px;padding:14px 16px;white-space:pre-wrap;word-break:break-word}
+  .pipe-inputs{grid-template-columns:repeat(2,1fr)}
+  .pipe-chip{font-size:11px;padding:6px 9px}
+  .install-grid .glass,#install .glass{padding:20px 18px}
+}
+#install code{
+  font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.92em;
+  background:var(--eh-primary-light);color:var(--eh-primary);padding:2px 6px;border-radius:5px;
+}
+#install .code-block code{background:none;color:inherit;padding:0}
+.faq p a,.install-grid p a{color:var(--eh-primary);text-decoration:none;font-weight:600}
+.faq p a:hover,.install-grid p a:hover{text-decoration:underline}
+footer a:hover{text-decoration:underline}
+@media(max-width:820px){.install-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="bg-orbs"><div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div></div>
+
+<nav class="glass">
+  <a class="logo" href="#top">
+    <svg width="26" height="26" viewBox="0 0 64 64"><defs><linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0A7CFF"/><stop offset="1" stop-color="#5AC8FA"/></linearGradient></defs><rect x="4" y="4" width="56" height="56" rx="14" fill="url(#lg1)"/><path d="M20 24h24M20 32h16M20 40h20" stroke="white" stroke-width="4" stroke-linecap="round"/></svg>
+    easy-html
+  </a>
+  <div class="links">
+    <a href="#features">Features</a>
+    <a href="#how">How it works</a>
+    <a href="#gallery" class="keep">Themes</a>
+    <a href="#install">Install</a>
+    <a href="https://github.com/Songhonglei/html-tool-suite" target="_blank" rel="noopener">GitHub ↗</a>
+    <button id="resetTheme" class="keep" onclick="resetTheme()">↺ Reset theme</button>
+  </div>
+</nav>
+
+<!-- Hero -->
+<header class="hero wrap" id="top">
+  <div class="badge glass">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 2v4M12 18v4M2 12h4M18 12h4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg>
+    Open-source agent skill · MIT
+  </div>
+  <h1>One sentence in,<br><span class="grad">a designed web page out</span></h1>
+  <p class="sub">Markdown, Excel, Word, tables, images or a paragraph of text — hand it to your AI agent, pick a theme, and get a self-contained page you can host anywhere.</p>
+  <div class="cta">
+    <a class="btn btn-primary" href="#gallery">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="19" cy="13" r="2"/><circle cx="6" cy="12" r="3"/><circle cx="14" cy="19.5" r="1.5"/></svg>
+      See 19 themes
+    </a>
+    <a class="btn btn-ghost glass" href="https://github.com/Songhonglei/html-tool-suite/tree/main/skills/easy-html" target="_blank" rel="noopener">View on GitHub ↗</a>
+  </div>
+
+  <div class="pipeline glass">
+    <div class="pipe-inputs">
+      <span class="pipe-chip"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Markdown</span>
+      <span class="pipe-chip"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>Excel .xlsx</span>
+      <span class="pipe-chip"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>Word .docx</span>
+      <span class="pipe-chip"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>Images</span>
+      <span class="pipe-chip"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 13l4-4 4 4 5-6"/></svg>Tables</span>
+      <span class="pipe-chip"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 6.1H3M21 12.1H3M15.1 18H3"/></svg>Plain text</span>
+    </div>
+    <div class="pipe-arrow">
+      <div class="flow"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+      <div class="core">easy-html</div>
+      <div class="flow"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+    </div>
+    <div class="pipe-out">
+      <div class="mini-page">
+        <div class="mp-bar"><i></i><i></i><i></i></div>
+        <div class="mp-body">
+          <div class="mp-title"></div>
+          <div class="mp-line"></div>
+          <div class="mp-line short"></div>
+          <div class="mp-chart"><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Features -->
+<section id="features">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">Capabilities</div>
+      <h2>Not a format converter — a redesign</h2>
+      <p>Most tools just move your text into HTML. easy-html treats the content as design material.</p>
+    </div>
+    <div class="feat-grid">
+      <div class="feat glass">
+        <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></div>
+        <h3>Everything goes in</h3>
+        <p>Six input types, one pipeline: every Excel sheet becomes a table, Word headings and tables are parsed with zero dependencies, images can be embedded or reproduced as layout.</p>
+        <div class="tags"><span>Markdown</span><span>Excel</span><span>Word</span><span>Images</span><span>Tables</span><span>Plain text</span></div>
+      </div>
+      <div class="feat glass">
+        <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 13l4-4 4 4 5-6"/></svg></div>
+        <h3>Visualisation first</h3>
+        <p>A mandatory scan step finds the numbers, ratios, rankings, trends and timelines in your content and turns them into KPI cards, progress bars, donuts and real charts — instead of another wall of text.</p>
+        <div class="tags"><span>KPI cards</span><span>Charts</span><span>Progress bars</span><span>Timelines</span></div>
+      </div>
+      <div class="feat glass">
+        <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9c0-.5 0-1-.1-1.4a4.5 4.5 0 0 1-6.4-6.4A9.6 9.6 0 0 0 12 3z"/><circle cx="7.5" cy="10.5" r="1"/><circle cx="12" cy="7.5" r="1"/><circle cx="16.5" cy="10.5" r="1"/></svg></div>
+        <h3>Layout inheritance</h3>
+        <p>Already have a beautiful deck or design mock-up? The original structure is kept pixel-for-pixel and only the palette and fonts are re-mapped — so cycling through all 19 themes can never make it worse.</p>
+        <div class="tags"><span>Layout preserved</span><span>19 themes</span><span>Fonts follow</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How it works -->
+<section id="how">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">How it works</div>
+      <h2>A four-step pipeline</h2>
+      <p>You provide the content and pick a theme. The agent does the rest.</p>
+    </div>
+    <div class="steps">
+      <div class="step glass"><div class="num">1</div><h4>Normalise input</h4><p>Six formats parsed into structured blocks — headings, paragraphs, tables and data, nothing dropped.</p></div>
+      <div class="step glass"><div class="num">2</div><h4>Scan for visuals</h4><p>Numbers become KPI cards, trends become line charts, rankings become bars, steps become timelines.</p></div>
+      <div class="step glass"><div class="num">3</div><h4>Build the skeleton</h4><p>A semantic page structure with layout, components and charts in place — colour is left to the theme.</p></div>
+      <div class="step glass"><div class="num">4</div><h4>Theme &amp; ship</h4><p>Pick any of 19 themes, swap freely, then publish the self-contained file anywhere.</p></div>
+    </div>
+    <div class="dual-path glass">
+      <span class="pill">Path A · Rebuild</span>
+      <span class="txt">Loose content (text / tables / docs) → full redesign</span>
+      <span style="opacity:.35;font-weight:700">|</span>
+      <span class="pill">Path B · Inherit</span>
+      <span class="txt">Finished layout (polished HTML / design) → recolour only</span>
+    </div>
+  </div>
+</section>
+
+<!-- Gallery -->
+<section id="gallery">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">Theme Gallery</div>
+      <h2>19 built-in themes</h2>
+      <p>Light, dark and gradient families — themes carry colour and type only, never layout.</p>
+    </div>
+    <div class="hint-bar glass">
+      <svg class="spark" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.9 6.1L20 10l-6.1 1.9L12 18l-1.9-6.1L4 10l6.1-1.9z"/></svg>
+      <span><b>Try it:</b> click any theme card and <b>this whole page switches to that palette</b> — the page is its own demo.</span>
+    </div>
+    <div class="filter-bar">
+      <button class="filter-btn active" data-cat="all">All 19</button>
+      <button class="filter-btn" data-cat="light">☀️ Light 11</button>
+      <button class="filter-btn" data-cat="dark">🌑 Dark 5</button>
+      <button class="filter-btn" data-cat="gradient">🌈 Gradient 3</button>
+    </div>
+    <div class="gallery" id="galleryGrid"></div>
+  </div>
+</section>
+
+<!-- Install -->
+<section id="install">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">Get started</div>
+      <h2>Install and run</h2>
+      <p>Two dependencies, no build step, no account.</p>
+    </div>
+    <div class="install-grid">
+      <div class="glass">
+        <h4>1 · Install the engine</h4>
+        <p>The 19 themes come from the sibling project <a href="https://github.com/Songhonglei/html-golive" target="_blank" rel="noopener">html-golive</a>. It also gives you one-command publishing.</p>
+        <div class="code-block"><span class="c"># theme CSS engine (+ optional publishing)</span>
+pip install html-golive
+
+<span class="c"># optional, only to read .xlsx</span>
+pip install openpyxl</div>
+      </div>
+      <div class="glass">
+        <h4>2 · Add the skill to your agent</h4>
+        <p>Self-contained directory — no cross-skill imports, no shared runtime.</p>
+        <div class="code-block"><span class="c"># OpenClaw</span>
+clawhub install easy-html
+
+<span class="c"># Claude Code</span>
+cp -r easy-html ~/.claude/skills/
+
+<span class="c"># Cursor</span>
+cp -r easy-html .cursor/skills/</div>
+      </div>
+    </div>
+
+    <div class="glass" style="padding:28px 30px;margin-top:22px">
+      <h4 style="font-size:16px;font-weight:750;margin-bottom:6px">3 · The pipeline in six commands</h4>
+      <p style="font-size:13px;color:var(--eh-text-muted);margin-bottom:14px">Normally your agent runs these for you — but nothing is hidden, and every step works standalone.</p>
+      <div class="code-block"><span class="c"># normalise the input</span>
+python3 scripts/ingest.py report.xlsx &gt; blocks.json
+
+<span class="c"># (the agent writes a semantic HTML skeleton from blocks.json)</span>
+
+<span class="c"># inject layout + components + chart helper</span>
+python3 scripts/apply_layout.py page.html
+
+<span class="c"># pick one of 19 themes</span>
+python3 scripts/apply_style.py page.html --style bloomberg -o out.html
+
+<span class="c"># title + favicon</span>
+FAV=$(python3 scripts/make_favicon.py --emoji 📊)
+python3 scripts/set_meta.py out.html --title <span class="k">"Q3 Report"</span> --favicon <span class="k">"$FAV"</span>
+
+<span class="c"># publish (optional — it is a plain file, host it anywhere)</span>
+golive publish out.html --name <span class="k">"Q3 Report"</span></div>
+    </div>
+
+    <div class="glass" style="padding:28px 30px;margin-top:22px">
+      <h4 style="font-size:16px;font-weight:750;margin-bottom:6px">Layout inheritance mode</h4>
+      <p style="font-size:13px;color:var(--eh-text-muted);margin-bottom:14px">When the input already looks good: map its <code>:root</code> colours onto the seven <code>--eh-*</code> variables, then swap themes at will. The layout never moves.</p>
+      <div class="code-block">python3 scripts/inherit_layout.py deck.html --check
+python3 scripts/inherit_layout.py deck.html --style palace -o out.html</div>
+    </div>
+
+    <div class="faq" style="margin-top:34px">
+      <details class="glass" open>
+        <summary><span class="q">Q</span>Which input formats are supported?</summary>
+        <p>Markdown, plain text, Excel (<code>.xlsx</code>), Word (<code>.docx</code>), pasted or Markdown tables, stdin, images, and existing HTML. Legacy <code>.xls</code> / <code>.doc</code> need to be saved in the modern format first — the parser tells you so explicitly instead of failing silently.</p>
+      </details>
+      <details class="glass">
+        <summary><span class="q">Q</span>Where does the page get published?</summary>
+        <p>Wherever you like. The output is a self-contained single HTML file, so GitHub Pages, Netlify, Vercel, an S3 bucket, <code>python3 -m http.server</code> or an email attachment all work. <a href="https://github.com/Songhonglei/html-golive" target="_blank" rel="noopener">html-golive</a> gives you a one-command self-hosted option if you want URLs on your own infrastructure.</p>
+      </details>
+      <details class="glass">
+        <summary><span class="q">Q</span>Can I change the theme afterwards?</summary>
+        <p>Yes, any number of times. Themes only carry colour and typography; layout and content live in the skill's own CSS, so the two layers never fight. Re-running <code>apply_style.py</code> with a different key is all it takes.</p>
+      </details>
+      <details class="glass">
+        <summary><span class="q">Q</span>Does it phone home or download anything silently?</summary>
+        <p>No. The theme engine is resolved in a fixed order — <code>EASY_HTML_CSS_ENGINE</code>, then the installed <code>golive</code> package, then a local source tree — and if none is found the script exits with install instructions rather than fetching code. Chart.js is loaded from public CDNs at page-view time, and you can point <code>window.EH_CHART_CDN</code> at your own mirror for offline use.</p>
+      </details>
+      <details class="glass">
+        <summary><span class="q">Q</span>Which agents does it work with?</summary>
+        <p>Any agent that can read a <code>SKILL.md</code> and run Python — OpenClaw, Claude Code and Cursor are the tested ones. The scripts are also plain CLIs, so you can drive the whole pipeline by hand without an agent at all.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- Final CTA -->
+<section>
+  <div class="wrap">
+    <div class="final-cta glass">
+      <h2>Give your next document a web page</h2>
+      <p>Part of the html-tool-suite — a set of skills for generating, publishing and sharing HTML.</p>
+      <a class="btn btn-primary" href="https://github.com/Songhonglei/html-tool-suite/tree/main/skills/easy-html" target="_blank" rel="noopener">Get easy-html on GitHub ↗</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <b>easy-html</b> · MIT License · by <a href="https://github.com/Songhonglei" target="_blank" rel="noopener" style="color:inherit">Evan Song</a>
+    · <a href="https://github.com/Songhonglei/html-tool-suite" target="_blank" rel="noopener" style="color:inherit">html-tool-suite</a>
+    · <a href="https://github.com/Songhonglei/html-golive" target="_blank" rel="noopener" style="color:inherit">html-golive</a>
+  </div>
+</footer>
+
+<div id="toast"></div>
+
+<script>
+/* ================= 19 themes (colours extracted from the real theme CSS) ================= */
+const THEMES = [
+ {key:'apple',    name:'Apple',   cat:'light', desc:'Product pages · white papers · premium B2B', vars:{p:'#0071E3',pl:'rgba(0,113,227,0.1)',bg:'#F5F5F7',sf:'rgba(255,255,255,0.88)',tx:'#1D1D1F',mu:'#86868B',bd:'rgba(0,0,0,0.08)'}},
+ {key:'minimal',  name:'Minimal',     cat:'light', desc:'General docs · data summaries · internal reports', vars:{p:'#2563EB',pl:'rgba(37,99,235,0.1)',bg:'#FAFAFA',sf:'#FFFFFF',tx:'#111827',mu:'#6B7280',bd:'rgba(0,0,0,0.08)'}},
+ {key:'cowork',   name:'Cowork',cat:'light', desc:'Work reports · OKRs · team updates', vars:{p:'#2383E2',pl:'rgba(35,131,226,0.1)',bg:'#FFFFFF',sf:'#FFFFFF',tx:'#37352F',mu:'#9B9A97',bd:'rgba(55,53,47,0.09)'}},
+ {key:'newspaper',name:'Newspaper',     cat:'light', desc:'Editorial · retro · long-form reading', font:'"Playfair Display","Noto Serif SC",Georgia,serif', imp:'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;800&family=Noto+Serif+SC:wght@400;600&display=swap', vars:{p:'#8B1A1A',pl:'rgba(139,26,26,0.1)',bg:'#F2EFE3',sf:'#EAE6D8',tx:'#1A1208',mu:'#6B5C48',bd:'rgba(26,18,8,0.15)'}},
+ {key:'ink',      name:'Ink Scroll',     cat:'light', desc:'Cultural reports · heritage brands · East-Asian aesthetics', font:'"Noto Serif SC","STSong",Georgia,serif', imp:'https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;800&display=swap', vars:{p:'#8B1C2A',pl:'rgba(61,43,26,0.1)',bg:'#F4F1E8',sf:'#EDE8DC',tx:'#1C1C1C',mu:'#7A6A58',bd:'rgba(28,28,28,0.12)'}},
+ {key:'xhs',      name:'XHS Clean',   cat:'light', desc:'Community posts · lifestyle content · consumer brands', vars:{p:'#FF2442',pl:'#FFF0F2',bg:'#FFF5F5',sf:'#FFFFFF',tx:'#1A1A1A',mu:'#999999',bd:'rgba(255,36,66,0.1)'}},
+ {key:'xhs-fun',  name:'XHS Vivid',   cat:'light', desc:'Campaign pages · rich media · brand promos', vars:{p:'#FF2442',pl:'rgba(255,36,66,0.08)',bg:'#FFF8FA',sf:'#FFFFFF',tx:'#1A1A1A',mu:'#999999',bd:'rgba(255,36,66,0.1)'}},
+ {key:'morandi',  name:'Morandi', cat:'light', desc:'Design portfolios · minimal brands · understated luxury', vars:{p:'#7C8B7E',pl:'rgba(124,139,126,0.14)',bg:'#E8E4DD',sf:'#F4F1EC',tx:'#4A453E',mu:'#94897C',bd:'rgba(74,69,62,0.12)'}},
+ {key:'fresh',    name:'Fresh',   cat:'light', desc:'Health · sustainability · education · agriculture', vars:{p:'#2E9E5B',pl:'rgba(46,158,91,0.12)',bg:'#F1F7F0',sf:'#FBFEFA',tx:'#1F3A29',mu:'#6B8475',bd:'rgba(46,158,91,0.14)'}},
+ {key:'earthy',   name:'Earthy',     cat:'light', desc:'Lifestyle · coffee · hospitality · handmade', vars:{p:'#B5683C',pl:'rgba(181,104,60,0.13)',bg:'#F3ECE1',sf:'#FAF5EC',tx:'#3D2E22',mu:'#8A7460',bd:'rgba(61,46,34,0.13)'}},
+ {key:'macaron',  name:'Macaron',   cat:'light', desc:'Family · desserts · playful campaigns', vars:{p:'#EB6F8E',pl:'rgba(235,111,142,0.13)',bg:'#FDF2F4',sf:'#FFFAFB',tx:'#4A2F38',mu:'#9C7B85',bd:'rgba(235,111,142,0.16)'}},
+ {key:'cyberpunk',name:'Cyberpunk',     cat:'dark',  desc:'Tech decks · demos · youth marketing', dark:1, font:'"Rajdhani","PingFang SC",sans-serif', imp:'https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap', vars:{p:'#00F0FF',pl:'rgba(0,240,255,0.1)',bg:'#050812',sf:'#080e1c',tx:'#C8E8F0',mu:'#4A6A7A',bd:'rgba(0,240,255,0.2)'}},
+ {key:'bloomberg',name:'Bloomberg',cat:'dark', desc:'Financial data · market analysis · trading dashboards', dark:1, font:'"IBM Plex Sans","PingFang SC",sans-serif', imp:'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap', vars:{p:'#FF6600',pl:'rgba(255,102,0,0.15)',bg:'#0A0A0A',sf:'#111111',tx:'#E8E8E8',mu:'#8A8A8A',bd:'#2A2A2A'}},
+ {key:'steampunk',name:'Steampunk',     cat:'dark',  desc:'Retro-mechanical · industrial · character brands', dark:1, font:'"Cinzel","Palatino Linotype",Georgia,serif', imp:'https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&display=swap', vars:{p:'#B8860B',pl:'rgba(184,134,11,0.15)',bg:'#1A120A',sf:'#221608',tx:'#E8D8B0',mu:'#907860',bd:'rgba(184,134,11,0.28)'}},
+ {key:'palace',   name:'Palace',       cat:'dark',  desc:'Cultural storytelling · heritage revival · festivals', dark:1, font:'"ZCOOL XiaoWei","Noto Serif SC","STSong",serif', imp:'https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&family=Noto+Serif+SC:wght@400;600&display=swap', vars:{p:'#C8A45A',pl:'rgba(200,164,90,0.25)',bg:'#0E0604',sf:'#160A06',tx:'#F0E6C8',mu:'#9A8060',bd:'rgba(200,164,90,0.3)'}},
+ {key:'carbon',   name:'Carbon',     cat:'dark',  desc:'Developer docs · technical blogs · internal tools', dark:1, vars:{p:'#4FB8C4',pl:'rgba(79,184,196,0.15)',bg:'#14161A',sf:'#1A1D23',tx:'#D6DAE0',mu:'#8A929E',bd:'rgba(255,255,255,0.09)'}},
+ {key:'glass',    name:'Glass',     cat:'gradient', desc:'Modern SaaS · product sites · tech events', vars:{p:'#6D5EF7',pl:'rgba(109,94,247,0.14)',bg:'#E9E6FB',sf:'rgba(255,255,255,0.55)',tx:'#1F2433',mu:'#5B6072',bd:'rgba(255,255,255,0.6)'}},
+ {key:'dreamy',   name:'Dreamy',   cat:'gradient', desc:'Beauty · fashion · AI products', vars:{p:'#8B5CF6',pl:'rgba(139,92,246,0.12)',bg:'#F6F2FB',sf:'#FCFAFE',tx:'#2E2541',mu:'#7C7295',bd:'rgba(139,92,246,0.15)'}},
+ {key:'vivid',    name:'Vivid',     cat:'gradient', desc:'Startups · events · launches · young brands', vars:{p:'#7C3AED',pl:'rgba(124,58,237,0.12)',bg:'#FBF9FF',sf:'#FFFFFF',tx:'#1E1B2E',mu:'#6B6480',bd:'rgba(124,58,237,0.14)'}},
+];
+
+/* ================= Per-theme mini demo ================= */
+function miniDemo(t){
+  const v=t.vars;
+  switch(t.key){
+    case 'apple': return `<div class="mdemo" style="background:${v.bg}">
+      <div class="md-eyebrow" style="color:${v.p}">Keynote</div>
+      <div class="md-title" style="color:${v.tx};font-family:-apple-system,'SF Pro Display','PingFang SC',sans-serif;letter-spacing:-.5px">Light as air.<br>Fast as thought.</div>
+      <div class="md-sub" style="color:${v.mu}">Next-generation product white paper</div>
+      <div class="md-row">
+        <div class="md-kpi" style="background:${v.sf};border:1px solid ${v.bd}"><b style="color:${v.p}">3nm</b><span style="color:${v.mu}">process node</span></div>
+        <div class="md-kpi" style="background:${v.sf};border:1px solid ${v.bd}"><b style="color:${v.p}">2.4×</b><span style="color:${v.mu}">faster</span></div>
+      </div></div>`;
+    case 'minimal': return `<div class="mdemo" style="background:${v.sf};border:1px solid ${v.bd};font-family:'Inter','PingFang SC',sans-serif">
+      <div style="font-size:9px;letter-spacing:4px;color:${v.mu};font-weight:500;margin-bottom:7px">DESIGN PRINCIPLE — 04</div>
+      <div style="font-size:24px;font-weight:300;color:${v.tx};letter-spacing:-.5px;line-height:1.15">Less, <b style="font-weight:800;color:${v.p}">but better.</b></div>
+      <div style="width:28px;height:2px;background:${v.p};margin:9px 0 7px"></div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <span style="font-size:10px;color:${v.mu};font-weight:400">Whitespace · order · restraint</span>
+        <span style="font-size:9px;color:${v.mu};font-family:'Inter',sans-serif;font-weight:500">— Dieter Rams</span>
+      </div></div>`;
+    case 'cowork': return `<div class="mdemo" style="background:${v.sf};border:1px solid ${v.bd};font-family:'Inter','PingFang SC',sans-serif">
+      <div style="display:flex;align-items:center;gap:6px;padding-bottom:6px;border-bottom:1px solid ${v.bd};margin-bottom:8px">
+        <span style="font-size:13px">📔</span>
+        <span style="font-size:11px;font-weight:600;color:${v.tx}">Product team / workspace</span>
+        <span style="margin-left:auto;font-size:8.5px;color:#fff;background:${v.p};padding:2px 7px;border-radius:4px;font-weight:600">Share</span>
+      </div>
+      <div style="font-size:16px;font-weight:800;color:${v.tx};margin-bottom:6px">🎯 Sprint planning</div>
+      <div style="display:flex;gap:5px;margin-bottom:7px">
+        <span style="font-size:9px;padding:2px 8px;border-radius:4px;background:${v.pl};color:${v.p};font-weight:600">In progress 4</span>
+        <span style="font-size:9px;padding:2px 8px;border-radius:4px;background:rgba(76,175,80,.12);color:#3D8B40;font-weight:600">Done 12</span>
+        <span style="font-size:9px;padding:2px 8px;border-radius:4px;background:rgba(155,154,151,.14);color:${v.mu};font-weight:600">In review 3</span>
+      </div>
+      <div style="font-size:10.5px;color:${v.tx};display:flex;align-items:center;gap:6px"><span style="width:13px;height:13px;border-radius:3px;background:${v.p};color:#fff;font-size:8px;display:inline-flex;align-items:center;justify-content:center;flex:none">A</span>@dana is editing “Tracking plan”…</div></div>`;
+    case 'newspaper': return `<div class="mdemo" style="background:${v.bg};border:2.5px solid ${v.tx}">
+      <div style="text-align:center;border-bottom:1.5px solid ${v.tx};padding-bottom:5px;margin-bottom:7px">
+        <div style="font-family:'Playfair Display','Noto Serif SC',serif;font-weight:900;font-size:19px;color:${v.tx};letter-spacing:1px">THE DAILY PRESS</div>
+        <div style="font-size:8.5px;color:${v.mu};letter-spacing:2px">VOL.42 · CULTURE · 1926</div>
+      </div>
+      <div style="font-family:'Noto Serif SC',serif;font-size:13px;font-weight:700;color:${v.p}">A century of typographic craft</div>
+      <div style="font-size:10px;color:${v.mu};font-family:'Noto Serif SC',serif;margin-top:3px;column-count:2;column-gap:10px">Hot metal type is long gone, yet the rhythm and order of newspaper layout still reads beautifully on a screen today.</div></div>`;
+    case 'ink': return `<div class="mdemo" style="background:${v.bg}">
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <div style="flex:1">
+          <div class="md-title" style="color:${v.tx};font-family:'Noto Serif SC',serif;font-weight:900;font-size:20px">Travelers<br>Among Streams</div>
+          <div style="font-size:10.5px;color:${v.mu};font-family:'Noto Serif SC',serif;margin-top:4px">Distant peaks, misty water —<br>spirit resonance in ink</div>
+          <div style="margin-top:8px;height:3px;width:64%;background:linear-gradient(90deg,${v.tx},transparent);border-radius:2px"></div>
+        </div>
+        <div style="writing-mode:vertical-rl;font-family:'Noto Serif SC',serif;font-size:10px;color:${v.mu};letter-spacing:3px">Song dynasty</div>
+      </div>
+      <div class="md-seal" style="background:${v.p};font-family:'Noto Serif SC',serif">印</div></div>`;
+    case 'xhs': return `<div class="mdemo" style="background:${v.sf};border:1px solid ${v.bd}">
+      <div class="md-title" style="color:${v.tx};font-size:14.5px">The weekly-report template everyone asks for ✨</div>
+      <div class="md-tagline">
+        <i style="background:${v.pl};color:${v.p}">#productivity</i><i style="background:${v.pl};color:${v.p}">#worktools</i><i style="background:${v.pl};color:${v.p}">#tried&amp;true</i>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:9px;font-size:10.5px;color:${v.mu}">
+        <span style="color:${v.p};font-weight:700">❤ 12.4w</span><span>⭐ 8,921</span><span>💬 2,308</span>
+      </div></div>`;
+    case 'xhs-fun': return `<div class="mdemo" style="background:linear-gradient(135deg,${v.pl},${v.sf} 60%)">
+      <div class="md-eyebrow" style="color:${v.p}">🎉 Limited time</div>
+      <div class="md-title" style="color:${v.p};font-size:19px">Mid-year Wishlist Festival</div>
+      <div class="md-sub" style="color:${v.tx}">Everything on one page · coupons are live</div>
+      <div class="md-tagline">
+        <i style="background:${v.p};color:#fff">Bestsellers</i><i style="background:#FF8F1F;color:#fff">Flash deals</i><i style="background:#FFC107;color:#7A4A00">Bundle picks</i>
+      </div></div>`;
+    case 'morandi': return `<div class="mdemo" style="background:${v.sf}">
+      <div class="md-eyebrow" style="color:${v.mu}">PORTFOLIO · NO.07</div>
+      <div class="md-title" style="color:${v.tx};font-weight:700;letter-spacing:.5px">Whitespace is a statement</div>
+      <div style="display:flex;gap:6px;margin-top:9px">
+        <div style="flex:2;height:26px;border-radius:6px;background:${v.p};opacity:.85"></div>
+        <div style="flex:1;height:26px;border-radius:6px;background:#B8A99A"></div>
+        <div style="flex:1;height:26px;border-radius:6px;background:#9AA5B1"></div>
+        <div style="flex:1;height:26px;border-radius:6px;background:${v.bg};border:1px solid ${v.bd}"></div>
+      </div>
+      <div style="font-size:9.5px;color:${v.mu};margin-top:6px">Morandi palette · four muted tones</div></div>`;
+    case 'fresh': return `<div class="mdemo" style="background:${v.sf};border:1px solid ${v.bd}">
+      <div class="md-eyebrow" style="color:${v.p}">🌱 Weekly health</div>
+      <div class="md-title" style="color:${v.tx}">68,420 steps this week</div>
+      <div class="md-sub" style="color:${v.mu}">Ahead of 92% of peers · 12-day streak</div>
+      <div class="md-bar" style="background:${v.pl}"><i style="width:86%;background:linear-gradient(90deg,${v.p},#6FCF97)"></i></div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:${v.mu};margin-top:4px"><span>Mon</span><span>Wed</span><span>Fri</span><span>Sun</span></div></div>`;
+    case 'earthy': return `<div class="mdemo" style="background:${v.bg};border:1.5px dashed ${v.p}66">
+      <div class="md-eyebrow" style="color:${v.p}">☕ Hillside Pour-over</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:2px"><span style="font-family:'Noto Serif SC',serif;font-size:13.5px;font-weight:700;color:${v.tx}">Yirgacheffe · natural</span><b style="color:${v.p};font-size:13px">¥32</b></div>
+      <div style="font-size:9.5px;color:${v.mu};margin-bottom:5px">Berry / citrus / black-tea finish</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-family:'Noto Serif SC',serif;font-size:13.5px;font-weight:700;color:${v.tx}">Mandheling · medium-dark</span><b style="color:${v.p};font-size:13px">¥28</b></div>
+      <div style="font-size:9.5px;color:${v.mu}">Dark chocolate / caramel / nuts</div></div>`;
+    case 'macaron': return `<div class="mdemo" style="background:${v.sf};border:1px solid ${v.bd}">
+      <div class="md-title" style="color:${v.p};font-size:17px">🍓 A hundred ways to love mille-feuille</div>
+      <div class="md-sub" style="color:${v.mu}">Weekend baking class · family session open</div>
+      <div class="md-tagline">
+        <i style="background:${v.pl};color:${v.p}">🧁 Cupcakes</i><i style="background:rgba(255,193,7,.18);color:#B8860B">🍋 Lemon tart</i><i style="background:rgba(134,197,222,.22);color:#3A7A9C">🫐 Blueberry mousse</i>
+      </div></div>`;
+    case 'cyberpunk': return `<div class="mdemo" style="background:${v.bg};border:1px solid ${v.bd}">
+      <div style="font-family:'Rajdhani',monospace;color:${v.p};font-size:10px;letter-spacing:3px;text-shadow:0 0 8px ${v.p}">▮ SYSTEM ONLINE</div>
+      <div class="md-title" style="color:${v.tx};font-family:'Rajdhani',sans-serif;font-size:19px;letter-spacing:1px;text-shadow:0 0 12px ${v.p}55">NEURAL LINK <span style="color:${v.p}">v3.7</span></div>
+      <div class="md-code" style="background:#030509;color:${v.p};border:1px solid ${v.bd};margin-top:6px">&gt; uplink --sync ▓▓▓▓▓▓▓░░ 78%
+&gt; latency 0.3ms <span style="color:#7CFF6B">[OK]</span></div></div>`;
+    case 'bloomberg': return `<div class="mdemo" style="background:${v.bg};border:1px solid ${v.bd}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:${v.p};font-weight:700;letter-spacing:1px">MARKET TERMINAL</span>
+        <span style="font-size:9px;color:${v.mu}">16:00 CST</span>
+      </div>
+      <div class="md-ticker" style="color:${v.tx}"><span>SPX</span><span>5,321.4</span><span style="color:#4CAF50">▲ 1.2%</span></div>
+      <div class="md-ticker" style="color:${v.tx}"><span>NDX</span><span>19,208.7</span><span style="color:#4CAF50">▲ 2.1%</span></div>
+      <div class="md-ticker" style="color:${v.tx};border-bottom:none"><span>CSI300</span><span>3,842.1</span><span style="color:#F44336">▼ 0.4%</span></div></div>`;
+    case 'steampunk': return `<div class="mdemo" style="background:${v.bg};border:1.5px solid ${v.p}88;box-shadow:inset 0 0 18px rgba(184,134,11,.15)">
+      <div class="md-eyebrow" style="color:${v.p};font-family:'Cinzel',serif">EST. 1851 · MECHANICAL WORKS</div>
+      <div class="md-title" style="color:${v.tx};font-family:'Cinzel',serif;font-size:16px">BRASS &amp; STEAM</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:7px">
+        <div style="width:34px;height:34px;border-radius:50%;border:2.5px solid ${v.p};position:relative;flex:none"><i style="position:absolute;left:50%;top:50%;width:2px;height:12px;background:${v.p};transform-origin:bottom;transform:translate(-50%,-100%) rotate(52deg);font-style:normal"></i></div>
+        <div style="font-size:10.5px;color:${v.mu}">Boiler pressure <b style="color:${v.p}">87 PSI</b><br>Gear speed nominal</div>
+      </div></div>`;
+    case 'palace': return `<div class="mdemo" style="background:linear-gradient(160deg,#7A1F1F,#4A0E0E);border:2px solid ${v.p}">
+      <div style="text-align:center;padding:4px 0 2px">
+        <div style="font-size:9px;color:${v.p};letter-spacing:6px;font-family:'ZCOOL XiaoWei',serif">ETERNAL VERMILION</div>
+        <div style="font-family:'Ma Shan Zheng','ZCOOL XiaoWei',serif;font-size:26px;color:#F5D98E;text-shadow:0 1px 3px rgba(0,0,0,.5);margin:2px 0">Six Centuries</div>
+        <div style="font-size:9.5px;color:#E8C97Acc;font-family:'ZCOOL XiaoWei',serif">Crimson walls, golden tiles · heritage exhibition</div>
+        <div style="margin:7px auto 0;width:70%;height:1px;background:linear-gradient(90deg,transparent,${v.p},transparent)"></div>
+      </div>
+      <div class="md-seal" style="background:#B03A2E;font-family:'Ma Shan Zheng',serif;border:1px solid #F5D98E">宫</div></div>`;
+    case 'carbon': return `<div class="mdemo" style="background:${v.sf};border:1px solid ${v.bd}">
+      <div style="display:flex;gap:5px;margin-bottom:7px"><i style="width:8px;height:8px;border-radius:50%;background:#FF5F57;font-style:normal"></i><i style="width:8px;height:8px;border-radius:50%;background:#FEBC2E;font-style:normal"></i><i style="width:8px;height:8px;border-radius:50%;background:#28C840;font-style:normal"></i></div>
+      <div class="md-code" style="background:#0D0F13;color:${v.tx};border:1px solid ${v.bd}">$ npm run build
+<span style="color:${v.p}">✓ compiled in 1.2s</span>
+$ deploy --prod <span style="color:#7CE38B">done</span></div></div>`;
+    case 'glass': return `<div class="mdemo" style="background:linear-gradient(135deg,#C7C2F5,#BDE3F0);position:relative">
+      <div style="position:absolute;inset:10px;background:rgba(255,255,255,.5);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.75);border-radius:11px"></div>
+      <div style="position:relative;padding:6px 4px">
+        <div class="md-eyebrow" style="color:${v.p}">GLASSMORPHISM</div>
+        <div class="md-title" style="color:${v.tx};font-size:17px">Frosted, yet perfectly layered</div>
+        <div class="md-tagline"><i style="background:rgba(255,255,255,.7);color:${v.p}">SaaS site</i><i style="background:rgba(255,255,255,.7);color:${v.p}">Launch</i></div>
+      </div></div>`;
+    case 'dreamy': return `<div class="mdemo" style="background:linear-gradient(150deg,${v.sf},${v.pl})">
+      <div class="md-eyebrow" style="color:${v.p}">NEW ARRIVAL</div>
+      <div class="md-title" style="color:${v.tx};font-family:'Playfair Display','Noto Serif SC',serif;font-style:italic;font-size:18px">Aurora Radiance</div>
+      <div class="md-sub" style="color:${v.mu}">28-day glow · gentle · all skin types</div>
+      <div style="display:flex;gap:6px;margin-top:4px">
+        <div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#C4B5FD,#8B5CF6)"></div>
+        <div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#FBCFE8,#F472B6)"></div>
+        <div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#E9D5FF,#C084FC)"></div>
+      </div></div>`;
+    case 'vivid': return `<div class="mdemo" style="background:${v.sf};border:1px solid ${v.bd}">
+      <div class="md-eyebrow" style="background:linear-gradient(90deg,#7C3AED,#EC4899,#F59E0B);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">LAUNCH DAY 🚀</div>
+      <div class="md-title" style="font-size:19px;background:linear-gradient(95deg,#7C3AED 10%,#EC4899 55%,#F59E0B 95%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">Launch countdown</div>
+      <div style="display:flex;gap:6px;margin-top:7px">
+        ${['02','18','45'].map((n,i)=>`<div style="flex:1;text-align:center;padding:5px 0;border-radius:8px;color:#fff;font-weight:800;font-size:14px;background:${['#7C3AED','#EC4899','#F59E0B'][i]}">${n}<div style="font-size:8px;font-weight:600;opacity:.85">${['HRS','MIN','SEC'][i]}</div></div>`).join('')}
+      </div></div>`;
+  }
+  return '';
+}
+
+
+
+/* ================= Gallery ================= */
+const grid = document.getElementById('galleryGrid');
+THEMES.forEach(t=>{
+  const v=t.vars, card=document.createElement('div');
+  card.className='tcard glass'; card.dataset.cat=t.cat; card.dataset.key=t.key;
+  card.innerHTML=`
+    <span class="try-hint">Click to try this palette</span>
+    <div class="tprev" style="background:${v.bg}">${miniDemo(t)}</div>
+    <div class="tinfo">
+      <div class="tname"><span class="dotc" style="background:${v.p}"></span>${t.name}<span class="hex">${v.p.startsWith('#')?v.p:''}</span></div>
+      <div class="tdesc">${t.desc}</div>
+      <div class="tkey"><code>--style ${t.key}</code></div>
+    </div>`;
+  card.addEventListener('click',()=>applyTheme(t));
+  grid.appendChild(card);
+});
+
+/* ================= Filters ================= */
+document.querySelectorAll('.filter-btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.filter-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    const cat=b.dataset.cat;
+    document.querySelectorAll('.tcard').forEach(c=>{
+      c.classList.toggle('hidden', cat!=='all' && c.dataset.cat!==cat);
+    });
+  });
+});
+
+/* ================= Theme engine ================= */
+const R=document.documentElement, loadedFonts=new Set();
+const DEFAULTS={p:'#0A7CFF',pl:'rgba(10,124,255,0.10)',bg:'#EFF4FA',sf:'rgba(255,255,255,0.58)',tx:'#16233A',mu:'#5D6B80',bd:'rgba(255,255,255,0.65)'};
+function setVars(v,font){
+  R.style.setProperty('--eh-primary',v.p);
+  R.style.setProperty('--eh-primary-light',v.pl);
+  R.style.setProperty('--eh-bg',v.bg);
+  R.style.setProperty('--eh-surface',v.sf);
+  R.style.setProperty('--eh-text',v.tx);
+  R.style.setProperty('--eh-text-muted',v.mu);
+  R.style.setProperty('--eh-border',v.bd);
+  R.style.setProperty('--eh-font-head',font||'var(--eh-font)');
+}
+function hexToRgba(hex,a){
+  const m=hex.replace('#','');const n=parseInt(m.length===3?m.split('').map(c=>c+c).join(''):m,16);
+  return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`;
+}
+function applyTheme(t){
+  const v=t.vars;
+  setVars(v,t.font);
+  const dark=!!t.dark;
+  R.dataset.dark=dark?'1':'0';
+  R.style.setProperty('--lg-glow1',v.p.startsWith('#')?hexToRgba(v.p,dark?0.16:0.22):v.pl);
+  R.style.setProperty('--lg-glow2',v.p.startsWith('#')?hexToRgba(v.p,dark?0.10:0.14):v.pl);
+  if(t.imp&&!loadedFonts.has(t.imp)){
+    const l=document.createElement('link');l.rel='stylesheet';l.href=t.imp;document.head.appendChild(l);
+    loadedFonts.add(t.imp);
+  }
+  document.querySelectorAll('.tcard').forEach(c=>c.classList.toggle('active',c.dataset.key===t.key));
+  document.getElementById('resetTheme').classList.add('show');
+  toast(`Now showing "${t.name}" — this is the palette applied to a real page`);
+}
+function resetTheme(){
+  setVars(DEFAULTS,null);
+  R.dataset.dark='0';
+  R.style.setProperty('--lg-glow1','rgba(88,170,255,0.38)');
+  R.style.setProperty('--lg-glow2','rgba(112,216,236,0.32)');
+  document.querySelectorAll('.tcard').forEach(c=>c.classList.remove('active'));
+  document.getElementById('resetTheme').classList.remove('show');
+  toast('Back to the default palette');
+}
+let toastTimer;
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2600);
+}
+</script>
+</body>
+</html>
