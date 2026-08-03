@@ -14,6 +14,7 @@ A suite of skills for **HTML generation, publishing, and sharing** — built for
 
 | Stage | Skill | Description |
 |---|---|---|
+| Authoring | [`easy-html`](./skills/easy-html) | Turn Markdown / Excel / Word / tables / images into a polished single-page HTML with 19 themes |
 | Sharing | [`pinme-share`](./skills/pinme-share) | Upload any file/dir to PinMe (public IPFS) → short shareable URL |
 | Serving | [`agent-easy-http`](./skills/agent-easy-http) | Expose your OpenClaw agent as an HTTP(S) REST API over your network IP |
 | Serving | [`skill-to-http-flash`](./skills/skill-to-http-flash) | Compile a single skill into a standalone HTTP REST API (subprocess, zero-LLM runtime) |
