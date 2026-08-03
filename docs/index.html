@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>html-tool-suite · Agent skills for HTML generation, publishing and sharing</title>
+<meta name="description" content="A suite of open-source agent skills for generating, publishing and sharing HTML — built for OpenClaw, Claude Code, Cursor and any agent that can run Python.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%230A7CFF'/%3E%3Cstop offset='1' stop-color='%235AC8FA'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='4' y='4' width='56' height='56' rx='14' fill='url(%23g)'/%3E%3Cpath d='M20 24h24M20 32h16M20 40h20' stroke='white' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+:root{
+  --primary:#0A7CFF; --primary-light:rgba(10,124,255,.1);
+  --bg:#EFF4FA; --surface:rgba(255,255,255,.62); --text:#16233A;
+  --muted:#5D6B80; --border:rgba(255,255,255,.7);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans SC",sans-serif;
+  background:var(--bg);color:var(--text);line-height:1.65;overflow-x:hidden;
+}
+.orbs{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.orb{position:absolute;border-radius:50%;filter:blur(90px)}
+.orb1{width:620px;height:620px;top:-180px;left:-120px;background:rgba(88,170,255,.38)}
+.orb2{width:520px;height:520px;top:34%;right:-160px;background:rgba(112,216,236,.32)}
+.orb3{width:540px;height:540px;bottom:-200px;left:30%;background:rgba(255,255,255,.55)}
+.wrap{max-width:1000px;margin:0 auto;padding:0 26px}
+.glass{
+  background:var(--surface);backdrop-filter:blur(24px) saturate(1.7);
+  -webkit-backdrop-filter:blur(24px) saturate(1.7);
+  border:1px solid var(--border);border-radius:22px;
+  box-shadow:0 10px 40px rgba(31,59,101,.13),inset 0 1px 0 rgba(255,255,255,.85);
+}
+header{padding:96px 0 56px;text-align:center}
+.badge{
+  display:inline-block;font-size:13px;font-weight:600;color:var(--primary);
+  background:var(--primary-light);border:1px solid var(--border);
+  padding:7px 16px;border-radius:999px;margin-bottom:24px;
+}
+h1{font-size:clamp(32px,5.4vw,54px);font-weight:800;letter-spacing:-.5px;line-height:1.16;margin-bottom:18px}
+h1 .grad{background:linear-gradient(100deg,var(--primary) 10%,var(--text) 130%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+header p{font-size:clamp(15px,2vw,18.5px);color:var(--muted);max-width:620px;margin:0 auto 34px}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;padding:13px 30px;border-radius:999px;
+  font-size:15px;font-weight:650;text-decoration:none;transition:.25s;
+  background:var(--primary);color:#fff;box-shadow:0 6px 22px var(--primary-light);
+}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.08)}
+section{padding:26px 0 70px}
+.sec-head{text-align:center;margin-bottom:34px}
+.kicker{font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--primary);margin-bottom:10px}
+h2{font-size:clamp(24px,3.4vw,34px);font-weight:800;letter-spacing:-.3px;margin-bottom:10px}
+.sec-head p{color:var(--muted);font-size:15px}
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.card{padding:26px 28px;text-decoration:none;color:inherit;display:block;transition:.28s}
+.card:hover{transform:translateY(-5px)}
+.card .stage{
+  display:inline-block;font-size:11px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;
+  color:var(--primary);background:var(--primary-light);padding:3px 10px;border-radius:6px;margin-bottom:11px;
+}
+.card h3{font-size:19px;font-weight:750;margin-bottom:7px;display:flex;align-items:center;gap:8px}
+.card h3 code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:17px}
+.card p{font-size:13.5px;color:var(--muted);margin-bottom:12px}
+.card .more{font-size:13px;font-weight:650;color:var(--primary)}
+.featured{grid-column:1/-1;border:1.5px solid var(--primary)}
+.featured .stage{background:var(--primary);color:#fff}
+.guides{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.guide{padding:20px 22px;text-decoration:none;color:inherit;display:block;transition:.25s}
+.guide:hover{transform:translateY(-4px)}
+.guide b{display:block;font-size:15px;font-weight:700;margin-bottom:5px}
+.guide span{font-size:12.5px;color:var(--muted)}
+footer{padding:40px 0 56px;text-align:center;color:var(--muted);font-size:13.5px}
+footer a{color:inherit}
+footer a:hover{text-decoration:underline}
+@media(max-width:760px){
+  .cards,.guides{grid-template-columns:1fr}
+  header{padding:70px 0 40px}
+}
+</style>
+</head>
+<body>
+<div class="orbs"><div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div></div>
+
+<header class="wrap">
+  <div class="badge">Open-source agent skills · MIT</div>
+  <h1>HTML tooling<br><span class="grad">for AI agents</span></h1>
+  <p>A suite of self-contained skills for generating, publishing and sharing HTML — built for OpenClaw, Claude Code, Cursor, or any agent that can run Python.</p>
+  <a class="btn" href="https://github.com/Songhonglei/html-tool-suite" target="_blank" rel="noopener">View on GitHub ↗</a>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">Skills</div>
+      <h2>Five skills, one pipeline</h2>
+      <p>Each one is a standalone directory — no cross-skill imports, no shared runtime.</p>
+    </div>
+    <div class="cards">
+      <a class="card glass featured" href="./easy-html/">
+        <span class="stage">Authoring · has a site</span>
+        <h3><code>easy-html</code></h3>
+        <p>Turn Markdown, Excel, Word, tables or images into a polished single-page HTML. Visualisation-first skeletons, 19 built-in themes, and a layout-inheritance mode that recolours an already-good design without touching its structure.</p>
+        <span class="more">Open the landing page →</span>
+      </a>
+      <a class="card glass" href="https://github.com/Songhonglei/html-tool-suite/tree/main/skills/pinme-share" target="_blank" rel="noopener">
+        <span class="stage">Sharing</span>
+        <h3><code>pinme-share</code></h3>
+        <p>Upload any file or directory to PinMe (public IPFS) and get a short shareable URL back.</p>
+        <span class="more">View on GitHub ↗</span>
+      </a>
+      <a class="card glass" href="https://github.com/Songhonglei/html-tool-suite/tree/main/skills/agent-easy-http" target="_blank" rel="noopener">
+        <span class="stage">Serving</span>
+        <h3><code>agent-easy-http</code></h3>
+        <p>Expose your agent as an HTTP(S) REST API over your own network IP.</p>
+        <span class="more">View on GitHub ↗</span>
+      </a>
+      <a class="card glass" href="https://github.com/Songhonglei/html-tool-suite/tree/main/skills/skill-to-http-flash" target="_blank" rel="noopener">
+        <span class="stage">Serving</span>
+        <h3><code>skill-to-http-flash</code></h3>
+        <p>Compile a single skill into a standalone HTTP REST API — subprocess execution, zero-LLM runtime.</p>
+        <span class="more">View on GitHub ↗</span>
+      </a>
+      <a class="card glass" href="https://github.com/Songhonglei/html-tool-suite/tree/main/skills/skill-to-http" target="_blank" rel="noopener">
+        <span class="stage">Serving</span>
+        <h3><code>skill-to-http</code></h3>
+        <p>Serve every installed skill as a REST API, with a bilingual web console for testing and monitoring.</p>
+        <span class="more">View on GitHub ↗</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">Guides</div>
+      <h2>Design notes</h2>
+    </div>
+    <div class="guides">
+      <a class="guide glass" href="https://github.com/Songhonglei/html-tool-suite/blob/main/docs/http-trio.md" target="_blank" rel="noopener">
+        <b>HTTP trio</b>
+        <span>How the three HTTP-serving skills compare and when to pick which.</span>
+      </a>
+      <a class="guide glass" href="https://github.com/Songhonglei/html-tool-suite/blob/main/docs/design-agent-easy-http.md" target="_blank" rel="noopener">
+        <b>agent-easy-http design</b>
+        <span>A thin proxy over the native agent hook endpoint.</span>
+      </a>
+      <a class="guide glass" href="https://github.com/Songhonglei/html-tool-suite/blob/main/docs/design-skill-to-http-flash.md" target="_blank" rel="noopener">
+        <b>skill-to-http-flash design</b>
+        <span>Subprocess direct-exec with a zero-LLM runtime.</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    MIT License · by <a href="https://github.com/Songhonglei" target="_blank" rel="noopener">Evan Song</a>
+    · Sibling projects:
+    <a href="https://github.com/Songhonglei/html-golive" target="_blank" rel="noopener">html-golive</a>,
+    <a href="https://github.com/Songhonglei/better-agent-skills" target="_blank" rel="noopener">better-agent-skills</a>,
+    <a href="https://github.com/Songhonglei/build-better-skills" target="_blank" rel="noopener">build-better-skills</a>
+  </div>
+</footer>
+</body>
+</html>
