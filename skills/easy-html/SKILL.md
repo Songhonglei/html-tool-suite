@@ -13,10 +13,11 @@ description: >
 
 # easy-html
 
-- **Version**: 1.0.0
+- **Version**: 1.0.1
 - **License**: MIT
 - **Author**: Evan Song · [github.com/Songhonglei](https://github.com/Songhonglei)
 - **Repository**: https://github.com/Songhonglei/html-tool-suite
+- **Website**: https://songhonglei.github.io/html-tool-suite/easy-html/
 
 把「任意内容」变成「精美网页」的流水线：输入归一化 → 选样式 → 设 Title/FavIcon → 发布。
 
