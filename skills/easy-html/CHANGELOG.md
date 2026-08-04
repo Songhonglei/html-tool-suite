@@ -3,6 +3,14 @@
 All notable changes to `easy-html` are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); versions follow [SemVer](https://semver.org/).
 
+## v1.0.1
+
+Documentation only — no code change.
+
+- Added a **Website** link to the top of `SKILL.md` and the README, pointing at the new
+  landing page: <https://songhonglei.github.io/html-tool-suite/easy-html/> — it lists all
+  19 themes and recolours itself when you click one, so the page doubles as a live demo.
+
 ## v1.0.0 (open-source first release)
 
 First public release of `easy-html` — a content-to-polished-webpage pipeline for AI agents.
