@@ -384,8 +384,8 @@ def run_full_wizard():
     # ── Step 1: 监听配置 ───────────────────────────────────────────
     banner("Step 1/5: 监听配置")
     config["listen_host"] = ask(
-        "监听地址（0.0.0.0=允许内网访问，127.0.0.1=仅本机）",
-        default=existing_config.get("listen_host", "0.0.0.0"),
+        "监听地址（127.0.0.1=仅本机[默认/推荐]，0.0.0.0=允许内网访问，需配合 HTTPS 或显式豁免）",
+        default=existing_config.get("listen_host", "127.0.0.1"),
     )
     config["port"] = int(ask(
         "监听端口",
@@ -430,7 +430,9 @@ def run_full_wizard():
     print("  - 不开 HTTPS  → 调用方直接 curl 即可，零门槛（推荐先跑通再加 TLS）")
     print("  - 开 HTTPS    → 调用方需要 --cacert 指定证书（或导入系统信任库）")
     if config.get("listen_host") == "0.0.0.0":
-        print("  ⚠️  当前监听 0.0.0.0（局域网可达），如有跨机器调用强烈建议开 TLS")
+        print("  ⚠️  当前监听 0.0.0.0（局域网可达）：v1.1.0 起 0.0.0.0 + HTTP 需显式豁免")
+        print("      （allow_insecure_public_bind=true 或 AGENT_EASY_HTTP_ALLOW_INSECURE=1），")
+        print("      跨机器调用强烈建议开 TLS")
     print()
     config["tls_enabled"] = ask_yes_no(
         "现在启用 HTTPS？（n=先用 HTTP 跑通，需要时跑 gen_cert.py 再切回 HTTPS）",

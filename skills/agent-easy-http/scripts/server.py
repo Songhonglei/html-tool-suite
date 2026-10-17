@@ -97,13 +97,19 @@ logger = logging.getLogger(SKILL_NAME)
 
 # ── 默认配置 ─────────────────────────────────────────────────────────
 _DEFAULT_CONFIG = {
-    # 监听
-    "listen_host": "0.0.0.0",
+    # 监听（v1.1.0 起默认仅本机；对外开放需显式改配置，见下方安全开关）
+    "listen_host": "127.0.0.1",
     "port": DEFAULT_PORT,
 
     # 暴露范围控制
     "expose_skills": [],            # [] = 全暴露（白名单）
     "deny_skills": [],              # 黑名单（推荐至少配几个有副作用的）
+
+    # 安全开关（v1.1.0 新增，默认全部收紧）
+    "enable_agent_run": False,      # /agent/run 通用入口（无限 prompt 控制面），默认关闭
+    "allow_insecure_public_bind": False,  # 允许 0.0.0.0 + 明文 HTTP（强烈不推荐）
+    "cors_origins": [],             # [] = 不挂 CORS（服务间调用不需要）；如 ["https://x.com"]
+    "result_include_messages": False,     # /result 是否返回完整对话（默认只返回 assistant 输出）
 
     # 性能
     "max_concurrent_jobs": 10,
@@ -217,10 +223,14 @@ def _save_default_config() -> None:
     CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
     if not CONFIG_PATH.exists():
         content = """{
-  "listen_host": "0.0.0.0",
+  "listen_host": "127.0.0.1",
   "port": 7720,
   "expose_skills": [],
   "deny_skills": [],
+  "enable_agent_run": false,
+  "allow_insecure_public_bind": false,
+  "cors_origins": [],
+  "result_include_messages": false,
   "max_concurrent_jobs": 10,
   "hook_request_timeout": 30,
   "hook_url": "",
@@ -499,6 +509,9 @@ def build_app(config: dict) -> FastAPI:
     hook_url, hook_token = resolve_hook_endpoint(config)
     default_agent_id = (config.get("default_agent_id") or "").strip()
     allowed_agent_ids = config.get("allowed_agent_ids") or []  # [] = 禁止调用方指定；["*"] = 全部允许
+    agent_run_enabled = bool(config.get("enable_agent_run"))   # v1.1.0: /agent/run 默认关闭
+    result_include_messages = bool(config.get("result_include_messages"))  # v1.1.0: /result 默认不含完整对话
+    cors_origins = config.get("cors_origins") or []            # v1.1.0: 默认不挂 CORS
 
     auth_dep = make_api_key_dep(tls_cfg.api_key, tls_cfg.api_key_header)
 
@@ -508,13 +521,16 @@ def build_app(config: dict) -> FastAPI:
         version="3.0.0",
     )
 
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=False,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+    # CORS 仅在显式配置 cors_origins 时挂载（服务间调用不需要 CORS；
+    # 默认不再 allow_origins=["*"]，避免任意网页可探测本控制面）
+    if cors_origins:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=cors_origins,
+            allow_credentials=False,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
 
     skills = _discover_skills(expose_skills, deny_skills)
     logger.info(f"Discovered {len(skills)} skills (deny={len(deny_skills)}, expose={len(expose_skills) or 'ALL'})")
@@ -676,12 +692,16 @@ def build_app(config: dict) -> FastAPI:
         last_role = messages[-1]["role"] if messages else None
         status = "done" if (last_role == "assistant" and output) else "pending"
 
-        return {
+        # v1.1.0: 完整对话（含全部 user 消息）默认不返回，降敏为仅 assistant 输出；
+        # 需要完整对话时在 config 开启 result_include_messages=true
+        result = {
             "status": status,
             "run_id": run_id,
             "output": output,
-            "messages": messages,
         }
+        if result_include_messages:
+            result["messages"] = messages
+        return result
 
     # ── /skills/{name}/run（异步触发 → OpenClaw hook）─────────────────
     @app.post("/skills/{name}/run", dependencies=[Depends(auth_dep)])
@@ -747,7 +767,18 @@ def build_app(config: dict) -> FastAPI:
     @app.post("/agent/run", dependencies=[Depends(auth_dep)])
     async def run_agent(req: RunRequest):
         """通用入口：把用户的 message 直接发给 agent（不绑定特定 skill）。
-        agent 自己决定调什么 skill。"""
+        agent 自己决定调什么 skill。
+
+        v1.1.0 起默认关闭（这是"无限 prompt 控制面"，持 Key 者等价于
+        完全控制 agent）。需要时在 config 显式开启 enable_agent_run=true。
+        """
+        if not agent_run_enabled:
+            raise HTTPException(
+                status_code=403,
+                detail="/agent/run is disabled by default (v1.1.0). "
+                       "Set \"enable_agent_run\": true in config.json to enable "
+                       "this unrestricted control surface.",
+            )
         if not (hook_url and hook_token):
             raise HTTPException(
                 status_code=503,
@@ -1063,6 +1094,36 @@ def main(argv: list[str] | None = None) -> None:
 
     listen_host = config["listen_host"]
     port = config["port"]
+
+    # ── v1.1.0 安全门：0.0.0.0 + 明文 HTTP 必须显式确认 ─────────────────
+    # 这是"对外开放的远程控制面"，默认拒绝最危险的组合（全网卡 + 明文）。
+    if listen_host in ("0.0.0.0", "::") and not config.get("tls_enabled"):
+        insecure_allowed = (
+            config.get("allow_insecure_public_bind") is True
+            or os.environ.get("AGENT_EASY_HTTP_ALLOW_INSECURE", "").strip() == "1"
+        )
+        if not insecure_allowed:
+            print()
+            print("=" * 60)
+            print("  ❌ 拒绝启动：监听 0.0.0.0 但 TLS 未启用（明文 HTTP）")
+            print("=" * 60)
+            print("  该组合会把 agent 控制面以明文暴露给整个网络，X-API-Key 与")
+            print("  全部 prompt/结果均可被嗅探。请选择其一：")
+            print("   1. 仅本机使用：listen_host 改回 127.0.0.1（默认）")
+            print("   2. 启用 HTTPS：python3 scripts/gen_cert.py --san auto，")
+            print(f"      并把 {CONFIG_PATH} 的 tls_enabled 改 true")
+            print("   3. 明确接受风险（可信内网）：启动前")
+            print("         export AGENT_EASY_HTTP_ALLOW_INSECURE=1")
+            print("      或在 config.json 加 \"allow_insecure_public_bind\": true")
+            print()
+            sys.exit(1)
+    # 兜底：即便显式确认了，也打印醒目警告
+    if listen_host in ("0.0.0.0", "::") and not config.get("tls_enabled"):
+        logger.warning(
+            "INSECURE MODE: binding %s over plaintext HTTP "
+            "(explicitly acknowledged via allow_insecure_public_bind / "
+            "AGENT_EASY_HTTP_ALLOW_INSECURE)", listen_host,
+        )
 
     if not _port_is_free(listen_host, port):
         print(f"\n❌ 端口 {port} 已被占用。请先 stop 现有服务或换端口（--port）。\n")

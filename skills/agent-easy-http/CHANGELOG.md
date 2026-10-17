@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## v1.1.0 (2026-10-17)
+
+Security hardening in response to clawhub SkillSpector review ("overly broad remote-control exposure"). Breaking-ish defaults, opt-in for the risky surface:
+
+- **Default bind `127.0.0.1`** (was `0.0.0.0`). Binding `0.0.0.0`/`::` with TLS disabled now **refuses to start** unless explicitly acknowledged via `AGENT_EASY_HTTP_ALLOW_INSECURE=1` or config `allow_insecure_public_bind: true`. Existing deployments that relied on the old default must set one of these (or enable TLS).
+- **`/agent/run` disabled by default** (403). The generic entry hands any authenticated caller unrestricted prompt control over the agent; enable with config `enable_agent_run: true`.
+- **CORS removed by default** (was `allow_origins=["*"]`). Server-to-server callers don't need CORS; configure `cors_origins` (e.g. `["https://intranet.example.com"]`) to re-enable for browser clients.
+- **`/result/{run_id}` desensitized**: full conversation (`messages`, including every user prompt) is no longer returned by default — only `status` + assistant `output`. Opt in with `result_include_messages: true`.
+- init wizard now defaults to `127.0.0.1` and explains the insecure-bind escape hatch; SKILL.md security notice and config table updated.
+
 ## v1.0.2 (2026-07-28)
 
 Security hardening in response to clawhub SkillSpector review (no functional change):
